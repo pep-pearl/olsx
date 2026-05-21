@@ -1,11 +1,17 @@
-import { useCallback, useMemo, useState } from "react";
-import { BaseLayer, OLXMap, createVectorLayer, VectorLayer } from "../src";
+import { FeatureLike } from "ol/Feature";
 import Point from "ol/geom/Point";
 import { fromLonLat } from "ol/proj";
 import { Fill, Stroke, Style } from "ol/style";
 import CircleStyle from "ol/style/Circle";
 import Text from "ol/style/Text";
-import { FeatureLike } from "ol/Feature";
+import { useCallback, useMemo } from "react";
+import {
+  BaseLayer,
+  Controls,
+  createVectorLayer,
+  OLSXMap,
+  OLSXVectorLayer,
+} from "../src";
 
 const types = ["type1", "type2"] as const;
 
@@ -19,8 +25,6 @@ type SeoulPlace = {
 const SeoulVectorLayer = createVectorLayer<typeof types, SeoulPlace>();
 
 function App() {
-  const [type, setType] = useState<"street" | "satellite">("street");
-
   const seoulDummyData = useMemo<SeoulPlace[]>(
     () => [
       {
@@ -99,17 +103,8 @@ function App() {
   }, []);
 
   return (
-    <OLXMap style={{ width: "100dvw", height: "100dvh" }}>
-      <BaseLayer type={type} />
-
-      <button
-        onClick={() =>
-          setType((prev) => (prev === "street" ? "satellite" : "street"))
-        }
-        style={{ position: "absolute", top: 10, left: 10, zIndex: 1000 }}
-      >
-        Toggle Base Layer
-      </button>
+    <OLSXMap style={{ width: "100dvw", height: "100dvh" }}>
+      <BaseLayer />
 
       {/* <SeoulVectorLayer id="test-layer" types={types} style={markerStyle}>
         <SeoulVectorLayer.Source />
@@ -121,16 +116,19 @@ function App() {
           getGeometry={getGeometry}
         />
       </SeoulVectorLayer> */}
-      <VectorLayer id="another-layer" types={types} style={markerStyle}>
-        <VectorLayer.Source />
-        <VectorLayer.FeatureSet
+      <Controls>
+        <Controls.ToggleBaseLayerButton />
+      </Controls>
+      <OLSXVectorLayer id="another-layer" types={types} style={markerStyle}>
+        <OLSXVectorLayer.Source />
+        <OLSXVectorLayer.FeatureSet
           type="type1"
           data={seoulDummyData}
           getId={getId}
           getGeometry={getGeometry}
         />
-      </VectorLayer>
-    </OLXMap>
+      </OLSXVectorLayer>
+    </OLSXMap>
   );
 }
 

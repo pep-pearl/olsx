@@ -1,6 +1,6 @@
-import { useEffect } from "react";
-import { useMapContext } from "../context";
 import OlVectorSource from "ol/source/Vector";
+import { useEffect } from "react";
+import { useMapContext } from "../../core/context";
 import { useVectorLayerContext } from "./vectorLayerContext";
 
 export function VectorSource() {

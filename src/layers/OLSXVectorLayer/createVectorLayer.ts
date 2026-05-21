@@ -1,9 +1,9 @@
 import type { ComponentType, LazyExoticComponent } from "react";
 import { FeatureSet, type FeatureSetProps } from "./FeatureSet";
-import { VectorLayer, type VectorLayerProps } from "./VectorLayer";
+import { OLSXVectorLayer, type VectorLayerProps } from "./VectorLayer";
 import { VectorSource } from "./VectorSource";
 
-export type VectorLayerCompound<
+export type OLSXVectorLayerCompound<
   TTypes extends readonly string[] = readonly string[],
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   TData extends object = any,
@@ -15,15 +15,18 @@ export type VectorLayerCompound<
   >;
 };
 
-export function createVectorLayer<
+export function defineOlsxVectorLayer<
   TTypes extends readonly string[] = readonly string[],
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   TData extends object = any,
 >() {
-  return Object.assign(VectorLayer as ComponentType<VectorLayerProps<TTypes>>, {
-    Source: VectorSource as ComponentType,
-    FeatureSet: FeatureSet as ComponentType<
-      FeatureSetProps<TTypes[number], TData>
-    >,
-  }) as VectorLayerCompound<TTypes, TData>;
+  return Object.assign(
+    OLSXVectorLayer as ComponentType<VectorLayerProps<TTypes>>,
+    {
+      Source: VectorSource as ComponentType,
+      FeatureSet: FeatureSet as ComponentType<
+        FeatureSetProps<TTypes[number], TData>
+      >,
+    },
+  ) as OLSXVectorLayerCompound<TTypes, TData>;
 }

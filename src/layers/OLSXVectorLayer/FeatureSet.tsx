@@ -1,9 +1,9 @@
-import { useEffect } from "react";
-import { useMapContext } from "../context";
-import { useVectorLayerContext } from "./vectorLayerContext";
 import { Feature } from "ol";
 import type { Geometry } from "ol/geom";
-import { FEATURE_DATA_KEY } from "../constants";
+import { useEffect } from "react";
+import { FEATURE_DATA_KEY } from "../../core/constants";
+import { useMapContext } from "../../core/context";
+import { useVectorLayerContext } from "./vectorLayerContext";
 
 export type FeatureSetProps<
   TType extends string = string,

@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { useMapContext } from "../context";
-import OlVectorLayer from "ol/layer/Vector";
-import { VectorLayerContext } from "./vectorLayerContext";
-import type { FeatureLike } from "ol/Feature";
-import type { Style } from "ol/style";
 import { getUid } from "ol";
+import type { FeatureLike } from "ol/Feature";
+import OlVectorLayer from "ol/layer/Vector";
+import type { Style } from "ol/style";
+import { useEffect, useRef, useState } from "react";
+import { useMapContext } from "../../core/context";
+import { VectorLayerContext } from "./vectorLayerContext";
 
 type VectorStyleResult = Style | Style[] | void;
 
@@ -25,7 +25,7 @@ function getFeatureStyleCacheKey(feature: FeatureLike, type?: string) {
   return [featureId ?? getUid(feature), type ?? ""].join(":");
 }
 
-export function VectorLayer<
+export function OLSXVectorLayer<
   TTypes extends readonly string[] = readonly string[],
 >({ id, types, children, style, cacheStyle = true }: VectorLayerProps<TTypes>) {
   const [isVectorLayerReady, setIsVectorLayerReady] = useState(false);
