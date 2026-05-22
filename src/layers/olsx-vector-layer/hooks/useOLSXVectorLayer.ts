@@ -1,7 +1,7 @@
 import VectorLayer from "ol/layer/Vector";
 import type { Style } from "ol/style";
-import { useEffect, useRef, useState } from "react";
-import { useMapRefsContext } from "../../../core/model/context";
+import { useEffect, useRef } from "react";
+import { useMountLayer } from "../../../core/hooks/useMountLayer";
 import type { OLSXVectorLayerProps } from "../types";
 import { getFeatureStyleCacheKey } from "../utils/styleCache";
 
@@ -12,34 +12,10 @@ export function useOLSXVectorLayer<TTypes extends readonly string[]>({
   style,
   cacheStyle,
 }: OLSXVectorLayerProps<TTypes>) {
-  const [isVectorLayerReady, setIsVectorLayerReady] = useState(false);
-  const { mapRef, layerRegistryRef } = useMapRefsContext();
-  const vectorLayerRef = useRef<VectorLayer | null>(null);
   const styleCacheRef = useRef<Map<string, VectorStyleResult>>(new Map());
 
-  useEffect(() => {
-    if (!mapRef.current || !layerRegistryRef.current) return;
-    const layerRegistry = layerRegistryRef.current;
-    if (layerRegistry.has(id)) {
-      console.warn(`Layer with id "${id}" already exists. Skipping creation.`);
-      return;
-    }
-
-    const map = mapRef.current;
-    const vectorLayer = new VectorLayer();
-
-    map.addLayer(vectorLayer);
-    layerRegistry.set(id, vectorLayer);
-    setIsVectorLayerReady(true);
-    vectorLayerRef.current = vectorLayer;
-
-    return () => {
-      map.removeLayer(vectorLayer);
-      layerRegistry.delete(id);
-      setIsVectorLayerReady(false);
-      vectorLayerRef.current = null;
-    };
-  }, [mapRef, id, layerRegistryRef, setIsVectorLayerReady]);
+  const { isLayerReady: isVectorLayerReady, layerRef: vectorLayerRef } =
+    useMountLayer<VectorLayer>(id, () => new VectorLayer());
 
   useEffect(() => {
     const layer = vectorLayerRef.current;
@@ -82,7 +58,7 @@ export function useOLSXVectorLayer<TTypes extends readonly string[]>({
       styleCache?.clear();
       layer.setStyle(undefined);
     };
-  }, [style, cacheStyle]);
+  }, [style, cacheStyle, vectorLayerRef]);
 
   return {
     vectorLayerRef,

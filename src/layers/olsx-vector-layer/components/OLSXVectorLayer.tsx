@@ -34,7 +34,7 @@ function OLSXVectorLayerComp<
   useImperativeHandle(
     ref,
     () => ({
-      getLayer: () => vectorLayerRef.current,
+      getVectorLayer: () => vectorLayerRef.current,
       isVectorLayerReady,
     }),
     [isVectorLayerReady, vectorLayerRef],

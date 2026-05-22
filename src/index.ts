@@ -15,8 +15,8 @@ export {
   useMapReadyContext,
   useMapRefsContext,
 } from "./core/model/context";
-export * from "./core/model/useMapControls";
 export * from "./core/types";
 export * from "./layers/olsx-map";
+export * from "./layers/olsx-tile-layer";
 export * from "./layers/olsx-vector-layer";
 export * from "./presets/base-layer";

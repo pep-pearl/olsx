@@ -1,1 +1,1 @@
-export * from "./OLSXMap";
+export * from "./components/OLSXMap";

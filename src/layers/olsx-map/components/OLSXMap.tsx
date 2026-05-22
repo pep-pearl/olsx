@@ -8,14 +8,20 @@
  * @ai-notes Preserve provider values and child render timing; many components depend on isMapReady.
  */
 
-import React, { forwardRef, useImperativeHandle, useMemo } from "react";
+import React, {
+  forwardRef,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import {
   BaseLayerContext,
   MapReadyContext,
   MapRefsContext,
-} from "../../core/model/context";
-import type { OLSXMapProps, OLSXMapRef } from "./types";
-import { useOLSXMap } from "./useOLSXMap";
+} from "../../../core/model/context";
+import type { BaseLayerType } from "../../../core/types";
+import { useOLSXMap } from "../hooks/useOLSXMap";
+import type { OLSXMapProps, OLSXMapRef } from "../types";
 
 const DEFAULT_CENTER: [number, number] = [126.978, 37.5665];
 const DEFAULT_ZOOM = 16;
@@ -26,37 +32,43 @@ function OLSXMapComp(
     defaultCenter = DEFAULT_CENTER,
     defaultZoom = DEFAULT_ZOOM,
     children,
+    defaultControl = [],
   }: OLSXMapProps,
   ref: React.ForwardedRef<OLSXMapRef>,
 ) {
   const {
     mapRef,
+    viewRef,
     layerRegistryRef,
     sourceRegistryRef,
     isMapReady,
     mapElementRef,
-    baseLayerType,
-    setBaseLayerType,
-  } = useOLSXMap(defaultCenter, defaultZoom);
+  } = useOLSXMap(defaultCenter, defaultZoom, defaultControl);
+
+  const [baseLayerType, setBaseLayerType] = useState<BaseLayerType | null>(
+    null,
+  );
 
   useImperativeHandle(
     ref,
     () => ({
       getMap: () => mapRef.current,
+      getView: () => viewRef.current,
       getLayerRegistry: () => layerRegistryRef.current,
       getSourceRegistry: () => sourceRegistryRef.current,
       isMapReady,
     }),
-    [mapRef, layerRegistryRef, sourceRegistryRef, isMapReady],
+    [mapRef, layerRegistryRef, sourceRegistryRef, isMapReady, viewRef],
   );
 
   const mapRefsContextValue = useMemo(
     () => ({
       mapRef,
+      viewRef,
       layerRegistryRef,
       sourceRegistryRef,
     }),
-    [mapRef, layerRegistryRef, sourceRegistryRef],
+    [mapRef, layerRegistryRef, sourceRegistryRef, viewRef],
   );
 
   const mapReadyContextValue = useMemo(

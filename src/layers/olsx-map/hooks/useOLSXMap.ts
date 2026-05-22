@@ -3,24 +3,21 @@ import type { Layer } from "ol/layer";
 import { fromLonLat } from "ol/proj";
 import type VectorSource from "ol/source/Vector";
 import { useEffect, useRef, useState } from "react";
-import type { BaseLayerType } from "../../core/types";
-import type { OLSXMapProps } from "./types";
+import type { OLSXMapProps } from "../types";
 
 export function useOLSXMap(
   defaultCenter: NonNullable<OLSXMapProps["defaultCenter"]>,
   defaultZoom: NonNullable<OLSXMapProps["defaultZoom"]>,
+  defaultControl: NonNullable<OLSXMapProps["defaultControl"]>,
 ) {
   const [isMapReady, setIsMapReady] = useState(false);
 
   const mapRef = useRef<OlMap | null>(null);
+  const viewRef = useRef<View | null>(null);
   const mapElementRef = useRef<HTMLDivElement>(null);
 
   const layerRegistryRef = useRef<Map<string, Layer>>(new Map());
   const sourceRegistryRef = useRef<Map<string, VectorSource>>(new Map());
-
-  const [baseLayerType, setBaseLayerType] = useState<BaseLayerType | null>(
-    null,
-  );
 
   useEffect(() => {
     const target = mapElementRef.current;
@@ -34,14 +31,17 @@ export function useOLSXMap(
     const map = new OlMap({
       target,
       view,
+      controls: defaultControl,
     });
 
     mapRef.current = map;
+    viewRef.current = view;
 
     setIsMapReady(true);
 
     return () => {
       mapRef.current = null;
+      viewRef.current = null;
       map.dispose();
       setIsMapReady(false);
     };
@@ -49,11 +49,10 @@ export function useOLSXMap(
 
   return {
     mapRef,
+    viewRef,
     layerRegistryRef,
     sourceRegistryRef,
     isMapReady,
     mapElementRef,
-    baseLayerType,
-    setBaseLayerType,
   };
 }

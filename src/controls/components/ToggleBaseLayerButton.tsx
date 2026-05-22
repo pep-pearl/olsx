@@ -1,5 +1,8 @@
-import { useBaseLayerContext, useMapReadyContext } from "../../core/model/context";
-import { useToggleBaseLayer } from "../hooks/useToggleBaseLayer";
+import { useToggleBaseLayer } from "../../core/hooks/useToggleBaseLayer";
+import {
+  useBaseLayerContext,
+  useMapReadyContext,
+} from "../../core/model/context";
 
 type ToggleBaseLayerButtonProps = {
   className?: string;

@@ -1,5 +1,5 @@
-import { useBaseLayerContext } from "../../core/model/context";
-import type { BaseLayerType } from "../../core/types";
+import { useBaseLayerContext } from "../model/context";
+import type { BaseLayerType } from "../types";
 
 export function useToggleBaseLayer() {
   const { baseLayerType, setBaseLayerType } = useBaseLayerContext();

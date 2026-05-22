@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
+import { useZoom } from "../../core/hooks/useZoom";
 import { useMapReadyContext } from "../../core/model/context";
-import { useZoom } from "../hooks/useZoom";
 
 type ZoomControls = {
   zoomIn: (addZoom?: number) => void;

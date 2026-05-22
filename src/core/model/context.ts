@@ -8,7 +8,7 @@
  * @ai-notes Context shape is a core integration contract; update consumers and AI_INDEX.md together.
  */
 
-import type { Map as OlMap } from "ol";
+import type { Map as OlMap, View } from "ol";
 import type { Layer } from "ol/layer";
 import type VectorSource from "ol/source/Vector";
 import type { Style } from "ol/style";
@@ -20,6 +20,7 @@ export type LayerStyleCache = Map<string, StyleCacheValue>;
 
 type MapRefsContextType = {
   mapRef: RefObject<OlMap | null>;
+  viewRef: RefObject<View | null>;
   layerRegistryRef: RefObject<Map<string, Layer>>;
   sourceRegistryRef: RefObject<Map<string, VectorSource>>;
 };

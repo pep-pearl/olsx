@@ -1,64 +1,71 @@
 import type { EventsKey } from "ol/events";
 import { unByKey } from "ol/Observable";
 import { useCallback, useEffect, useState } from "react";
-import { useMapRefsContext } from "../../core/model/context";
+import { useMapRefsContext } from "../model/context";
 
 export function useZoom() {
-  const { mapRef } = useMapRefsContext();
+  const { mapRef, viewRef } = useMapRefsContext();
   const [zoom, setZoomState] = useState(0);
-  const [view, setView] = useState<ReturnType<
-    NonNullable<typeof mapRef.current>["getView"]
-  > | null>(null);
 
   useEffect(() => {
-    if (!mapRef.current) return;
-
-    const map = mapRef.current;
-
     let viewKey: EventsKey | undefined;
+    let mapKey: EventsKey | undefined;
 
-    const bindView = () => {
+    const unbindView = () => {
       if (viewKey) {
         unByKey(viewKey);
         viewKey = undefined;
       }
+    };
 
-      const nextView = map.getView();
+    const bindView = () => {
+      unbindView();
 
-      setView(nextView);
-      setZoomState(nextView.getZoom() ?? 0);
+      const view = viewRef.current;
 
-      viewKey = nextView.on("change:resolution", () => {
-        setZoomState(nextView.getZoom() ?? 0);
+      if (!view) {
+        setZoomState(0);
+        return;
+      }
+
+      setZoomState(view.getZoom() ?? 0);
+
+      viewKey = view.on("change:resolution", () => {
+        setZoomState(view.getZoom() ?? 0);
       });
     };
 
     bindView();
 
-    const mapKey = map.on("change:view", bindView);
+    if (mapRef.current) {
+      mapKey = mapRef.current.on("change:view", bindView);
+    }
 
     return () => {
-      unByKey(mapKey);
-
-      if (viewKey) {
-        unByKey(viewKey);
+      if (mapKey) {
+        unByKey(mapKey);
       }
+
+      unbindView();
     };
-  }, [mapRef, setZoomState]);
+  }, [mapRef, viewRef]);
 
   const zoomIn = useCallback(
     (addZoom = 1) => {
+      const view = viewRef.current;
       if (!view) return;
+
       view.animate({
         zoom: (view.getZoom() ?? zoom) + addZoom,
         duration: 250,
       });
     },
-    [view, zoom],
+    [viewRef, zoom],
   );
 
   const zoomOut = useCallback(
     (subtractZoom = 1) => {
+      const view = viewRef.current;
       if (!view) return;
 
       view.animate({
@@ -66,11 +73,12 @@ export function useZoom() {
         duration: 250,
       });
     },
-    [view, zoom],
+    [viewRef, zoom],
   );
 
   const setZoom = useCallback(
     (nextZoom: number) => {
+      const view = viewRef.current;
       if (!view) return;
 
       view.animate({
@@ -78,8 +86,9 @@ export function useZoom() {
         duration: 250,
       });
     },
-    [view],
+    [viewRef],
   );
+
   return {
     zoomIn,
     zoomOut,

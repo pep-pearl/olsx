@@ -29,6 +29,6 @@ export type OLSXVectorLayerProps<
 };
 
 export type OLSXVectorLayerRef = {
-  getLayer: () => VectorLayer | null;
+  getVectorLayer: () => VectorLayer | null;
   isVectorLayerReady: boolean;
 };
