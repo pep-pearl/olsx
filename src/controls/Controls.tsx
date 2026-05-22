@@ -14,6 +14,7 @@ export function ControlsWrap({ children }: ControlsProps) {
         position: "absolute",
         right: 10,
         top: 10,
+        gap: 8,
       }}
     >
       {children}

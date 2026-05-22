@@ -6,12 +6,14 @@ import {
   useEffect,
   useImperativeHandle,
   useRef,
+  useState,
 } from "react";
 import { useBaseLayerContext, useMapContext } from "../core/context";
 import { createBaseSource } from "../core/createBaseLayer";
 import type { BaseLayerType } from "../core/types";
 
 export type BaseLayerRef = {
+  isBaseLayerReady: boolean;
   toggle: () => void;
 };
 
@@ -27,6 +29,7 @@ export const BaseLayer = forwardRef<BaseLayerRef, BaseLayerProps>(
     const { defaultType = "street" } = props;
     const { mapRef } = useMapContext();
     const { baseLayerType, setBaseLayerType } = useBaseLayerContext();
+    const [isBaseLayerReady, setIsBaseLayerReady] = useState(false);
 
     /**
      * base layer 타입에 따른 레이어 인스턴스를 캐싱하는 레퍼런스. Map 객체를 사용하여, 각 BaseLayerType에 해당하는 TileLayer 인스턴스를 저장. getOrCreateBaseLayer 함수에서 이 캐시를 참조하여, 이미 생성된 레이어가 있으면 재사용하고, 없으면 새로 생성해서 캐시에 저장하는 방식으로 동작
@@ -92,6 +95,7 @@ export const BaseLayer = forwardRef<BaseLayerRef, BaseLayerProps>(
           map.removeLayer(layer);
         });
 
+        setIsBaseLayerReady(true);
         // baseLayerTypeRef.current = type;
         setBaseLayerType(type);
       },
@@ -105,6 +109,7 @@ export const BaseLayer = forwardRef<BaseLayerRef, BaseLayerProps>(
     useImperativeHandle(
       ref,
       () => ({
+        isBaseLayerReady,
         toggle: () => {
           // const currentType = baseLayerTypeRef.current ?? defaultType;
           const currentType = baseLayerType ?? defaultType;
@@ -115,7 +120,7 @@ export const BaseLayer = forwardRef<BaseLayerRef, BaseLayerProps>(
           changeBaseLayer(nextType);
         },
       }),
-      [changeBaseLayer, defaultType, baseLayerType],
+      [changeBaseLayer, defaultType, baseLayerType, isBaseLayerReady],
     );
 
     /**

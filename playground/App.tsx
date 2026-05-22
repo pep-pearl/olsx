@@ -118,6 +118,7 @@ function App() {
       </SeoulVectorLayer> */}
       <Controls>
         <Controls.ToggleBaseLayerButton />
+        <Controls.ZoomButton />
       </Controls>
       <OLSXVectorLayer id="another-layer" types={types} style={markerStyle}>
         <OLSXVectorLayer.Source />
@@ -126,6 +127,7 @@ function App() {
           data={seoulDummyData}
           getId={getId}
           getGeometry={getGeometry}
+          onClick={(item, feat) => {}}
         />
       </OLSXVectorLayer>
     </OLSXMap>

@@ -1,7 +1,8 @@
 import type { ComponentType, LazyExoticComponent } from "react";
-import { FeatureSet, type FeatureSetProps } from "./FeatureSet";
+import { FeatureSet } from "./FeatureSet";
 import { OLSXVectorLayer, type VectorLayerProps } from "./VectorLayer";
 import { VectorSource } from "./VectorSource";
+import type { FeatureSetProps } from "./types";
 
 export type OLSXVectorLayerCompound<
   TTypes extends readonly string[] = readonly string[],

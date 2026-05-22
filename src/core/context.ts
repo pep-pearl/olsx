@@ -11,6 +11,7 @@ export type LayerStyleCache = Map<string, StyleCacheValue>;
 
 type MapContextType = {
   mapRef: RefObject<OlMap | null>;
+  isMapReady: boolean;
   layerRegistryRef: RefObject<Map<string, Layer>>;
   sourceRegistryRef: RefObject<Map<string, VectorSource>>;
 };

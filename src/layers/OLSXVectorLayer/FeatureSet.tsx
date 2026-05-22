@@ -1,63 +1,30 @@
-import { Feature } from "ol";
-import type { Geometry } from "ol/geom";
-import { useEffect } from "react";
-import { FEATURE_DATA_KEY } from "../../core/constants";
-import { useMapContext } from "../../core/context";
-import { useVectorLayerContext } from "./vectorLayerContext";
-
-export type FeatureSetProps<
-  TType extends string = string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  TData extends object = any,
-> = {
-  type: TType;
-  getId: (item: TData) => string;
-  getGeometry: (item: TData) => Geometry;
-  data: Array<TData>;
-};
+import {
+  useFeatureSetFeaturePointermove,
+  useFeatureSetFeatureSingleclick,
+} from "./hooks/useFeatureSetFeatureEvent";
+import { useFeatureSetFeatures } from "./hooks/useFeatureSetFeatures";
+import type { FeatureSetProps } from "./types";
 
 export function FeatureSet<
   TType extends string = string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   TData extends object = any,
->({ type, data, getGeometry, getId }: FeatureSetProps<TType, TData>) {
-  const { mapRef, sourceRegistryRef } = useMapContext();
-  const { id } = useVectorLayerContext();
-
-  useEffect(() => {
-    if (!mapRef?.current || !sourceRegistryRef) return;
-
-    const sourceRegistry = sourceRegistryRef.current;
-
-    if (!sourceRegistry.has(id)) {
-      console.warn(
-        `Layer with id "${id}" does not have a source in source registry. Features will not be set.`,
-      );
-      return;
-    }
-
-    const vectorSource = sourceRegistry.get(id);
-    vectorSource?.clear();
-
-    const features = data.map((item) => {
-      const feature = new Feature({
-        geometry: getGeometry(item),
-        type,
-        [FEATURE_DATA_KEY]: item,
-      });
-      feature.setId(getId(item));
-
-      return feature;
-    });
-
-    vectorSource?.addFeatures(features);
-
-    return () => {
-      features.forEach((feature) => {
-        vectorSource?.removeFeature(feature);
-      });
-    };
-  }, [data, mapRef, sourceRegistryRef, id, getId, getGeometry, type]);
+>({
+  type,
+  data,
+  getGeometry,
+  getId,
+  onClick,
+  onHover,
+}: FeatureSetProps<TType, TData>) {
+  useFeatureSetFeatures<TType, TData>({
+    data,
+    getGeometry,
+    getId,
+    type,
+  });
+  useFeatureSetFeatureSingleclick<TType, TData>(type, onClick);
+  useFeatureSetFeaturePointermove<TType, TData>(type, onHover);
 
   return null;
 }

@@ -14,9 +14,10 @@ import { BaseLayerContext, MapContext } from "../core/context";
 import type { BaseLayerType } from "../core/types";
 
 type OLSXMapRef = {
-  map: OlMap | null;
-  layerRegistry: Map<string, Layer>;
-  sourceRegistry: Map<string, VectorSource>;
+  getMap: () => OlMap | null;
+  getLayerRegistry: () => Map<string, Layer>;
+  getSourceRegistry: () => Map<string, VectorSource>;
+  isMapReady: boolean;
 };
 
 type MapProps = {
@@ -41,7 +42,7 @@ export const OLSXMap = forwardRef<OLSXMapRef, MapProps>(
   ) => {
     const [isMapReady, setIsMapReady] = useState(false);
 
-    const mapRef = useRef<OlMap>(null);
+    const mapRef = useRef<OlMap | null>(null);
     const mapElementRef = useRef<HTMLDivElement>(null);
 
     const layerRegistryRef = useRef<Map<string, Layer>>(new Map());
@@ -53,36 +54,46 @@ export const OLSXMap = forwardRef<OLSXMapRef, MapProps>(
     );
 
     useEffect(() => {
-      if (!mapElementRef.current) return;
+      const target = mapElementRef.current;
+      if (!target) return;
 
-      const map = new OlMap({
-        target: mapElementRef.current,
-      });
       const view = new View({
         center: fromLonLat(defaultCenter),
         zoom: defaultZoom,
       });
+
+      const map = new OlMap({
+        target,
+        view,
+      });
+
       mapRef.current = map;
-      map.setView(view);
+
       setIsMapReady(true);
+
       return () => {
         mapRef.current = null;
-        mapElementRef.current = null;
         map.dispose();
         setIsMapReady(false);
       };
     }, []);
 
-    useImperativeHandle(ref, () => ({
-      map: mapRef.current,
-      layerRegistry: layerRegistryRef.current,
-      sourceRegistry: sourceRegistryRef.current,
-    }));
+    useImperativeHandle(
+      ref,
+      () => ({
+        getMap: () => mapRef.current,
+        getLayerRegistry: () => layerRegistryRef.current,
+        getSourceRegistry: () => sourceRegistryRef.current,
+        isMapReady,
+      }),
+      [],
+    );
 
     return (
       <MapContext.Provider
         value={{
           mapRef,
+          isMapReady,
           layerRegistryRef,
           sourceRegistryRef,
         }}

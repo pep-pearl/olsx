@@ -2,7 +2,13 @@ import { getUid } from "ol";
 import type { FeatureLike } from "ol/Feature";
 import OlVectorLayer from "ol/layer/Vector";
 import type { Style } from "ol/style";
-import { useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { useMapContext } from "../../core/context";
 import { VectorLayerContext } from "./vectorLayerContext";
 
@@ -18,6 +24,11 @@ export type VectorLayerProps<
   cacheStyle?: boolean;
 };
 
+export type VectorLayerRef = {
+  getLayer: () => OlVectorLayer | null;
+  isVectorLayerReady: boolean;
+};
+
 function getFeatureStyleCacheKey(feature: FeatureLike, type?: string) {
   const featureId =
     typeof feature.getId === "function" ? feature.getId() : undefined;
@@ -25,9 +36,10 @@ function getFeatureStyleCacheKey(feature: FeatureLike, type?: string) {
   return [featureId ?? getUid(feature), type ?? ""].join(":");
 }
 
-export function OLSXVectorLayer<
-  TTypes extends readonly string[] = readonly string[],
->({ id, types, children, style, cacheStyle = true }: VectorLayerProps<TTypes>) {
+function VectorLayer<TTypes extends readonly string[] = readonly string[]>(
+  { id, types, children, style, cacheStyle = true }: VectorLayerProps<TTypes>,
+  ref: React.ForwardedRef<VectorLayerRef>,
+) {
   const [isVectorLayerReady, setIsVectorLayerReady] = useState(false);
   const { mapRef, layerRegistryRef } = useMapContext();
   const vectorLayerRef = useRef<OlVectorLayer | null>(null);
@@ -55,7 +67,16 @@ export function OLSXVectorLayer<
       setIsVectorLayerReady(false);
       vectorLayerRef.current = null;
     };
-  }, [mapRef, layerRegistryRef, id]);
+  }, [mapRef, id, layerRegistryRef, setIsVectorLayerReady]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      getLayer: () => vectorLayerRef.current,
+      isVectorLayerReady,
+    }),
+    [isVectorLayerReady],
+  );
 
   useEffect(() => {
     const layer = vectorLayerRef.current;
@@ -111,3 +132,5 @@ export function OLSXVectorLayer<
     </VectorLayerContext.Provider>
   );
 }
+
+export const OLSXVectorLayer = forwardRef(VectorLayer) as typeof VectorLayer;
