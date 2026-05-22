@@ -1,3 +1,13 @@
+/**
+ * @ai-purpose Shared hook for mounting an OpenLayers layer into OLSXMap and registering it by id.
+ * @ai-entry true
+ * @ai-domain map
+ * @ai-depends MapRefsContext and OpenLayers Layer lifecycle.
+ * @ai-used-by OLSXTileLayer and OLSXVectorLayer hooks.
+ * @ai-keywords useMountLayer, layerRegistryRef, map.addLayer, map.removeLayer, layerRef, isLayerReady.
+ * @ai-notes Prefer this hook for new layer wrappers so registry and cleanup behavior stay consistent.
+ */
+
 import { Layer } from "ol/layer";
 import { useEffect, useRef, useState } from "react";
 import { useMapRefsContext } from "../model/context";

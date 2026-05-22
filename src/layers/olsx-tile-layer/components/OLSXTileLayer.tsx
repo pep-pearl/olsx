@@ -1,3 +1,13 @@
+/**
+ * @ai-purpose Generic React wrapper for mounting an OpenLayers TileLayer with a provided source.
+ * @ai-entry true
+ * @ai-domain map
+ * @ai-depends useMountLayer and OLSXTileLayer types.
+ * @ai-used-by Public package exports and consumers needing direct tile-layer control.
+ * @ai-keywords OLSXTileLayer, OLSXTileLayerRef, OLSXTileLayerProps, TileLayer, XYZ.
+ * @ai-notes This is lower-level than the BaseLayer preset and does not manage base-layer toggle state.
+ */
+
 import TileLayer from "ol/layer/Tile";
 import type { XYZ } from "ol/source";
 import React, { forwardRef, useEffect, useImperativeHandle } from "react";

@@ -10,19 +10,23 @@ Use it to decide which files to read before opening large parts of the repositor
 
 1. If exact files are provided, start from those files.
 2. For public API questions, start at `src/index.ts`, then follow the exported module.
-3. For map lifecycle or registry questions, start at `src/layers/olsx-map/OLSXMap.tsx`, `src/layers/olsx-map/useOLSXMap.ts`, and `src/core/model/context.ts`.
-4. For vector feature/data/event questions, start at `src/layers/olsx-vector-layer/components/OLSXVectorLayer.tsx`, then `components/FeatureSet.tsx` and the hooks under `src/layers/olsx-vector-layer/hooks/`.
-5. Check file-level `@ai-*` comments before opening full files when available.
-6. Do not scan all of `src/` by default unless the task explicitly calls for structure-wide maintenance.
+3. For map lifecycle or registry questions, start at `src/layers/olsx-map/components/OLSXMap.tsx`, `src/layers/olsx-map/hooks/useOLSXMap.ts`, and `src/core/model/context.ts`.
+4. For reusable layer lifecycle questions, start at `src/core/hooks/useMountLayer.ts`.
+5. For vector feature/data/event questions, start at `src/layers/olsx-vector-layer/components/OLSXVectorLayer.tsx`, then `components/FeatureSet.tsx` and the hooks under `src/layers/olsx-vector-layer/hooks/`.
+6. Check file-level `@ai-*` comments before opening full files when available.
+7. Do not scan all of `src/` by default unless the task explicitly calls for structure-wide maintenance.
 
 ## Project Shape
 
 - `src/index.ts` is the package root barrel. Keep public exports stable.
+- `src/core/model/` contains shared React contexts for map refs, map readiness, and base-layer state.
+- `src/core/hooks/` contains shared React/OpenLayers lifecycle hooks such as `useMountLayer`.
+- `src/core/utils/` contains OpenLayers helpers and source factories.
 - `src/layers/olsx-map/` creates the OpenLayers `Map`, owns shared registries, and provides React contexts.
+- `src/layers/olsx-tile-layer/` provides the generic tile-layer component built on the shared layer-mount hook.
+- `src/layers/olsx-vector-layer/` contains the vector layer compound API, source mounting, feature-set data bridge, feature events, and vector-specific types.
 - `src/presets/base-layer/` is the built-in replaceable base-map preset for street/satellite tile layers.
 - `src/controls/` contains default UI controls that consume map/base-layer contexts.
-- `src/layers/olsx-vector-layer/` contains the vector layer compound API, source mounting, feature-set data bridge, feature events, and vector-specific types.
-- `src/core/` contains shared context, constants, base source creation, OpenLayers helpers, and small React/OpenLayers hooks.
 - `playground/` is the Vite demo app used for local manual validation.
 
 ## Read First By Task
@@ -30,15 +34,18 @@ Use it to decide which files to read before opening large parts of the repositor
 ### Public API / Exports
 
 - `src/index.ts`
+- `src/layers/olsx-map/index.ts`
+- `src/layers/olsx-tile-layer/index.ts`
 - `src/layers/olsx-vector-layer/index.ts`
 - `src/layers/olsx-vector-layer/utils/createVectorLayer.ts`
 
 ### Map Provider / Lifecycle
 
-- `src/layers/olsx-map/OLSXMap.tsx`
-- `src/layers/olsx-map/useOLSXMap.ts`
+- `src/layers/olsx-map/components/OLSXMap.tsx`
+- `src/layers/olsx-map/hooks/useOLSXMap.ts`
 - `src/core/model/context.ts`
-- `src/core/types.ts`
+- `src/core/hooks/useMountLayer.ts`
+- `src/layers/olsx-map/types.ts`
 
 ### Base Layers
 
@@ -46,6 +53,12 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/presets/base-layer/hooks/useBaseLayer.ts`
 - `src/core/utils/createBaseLayer.ts`
 - `src/controls/components/ToggleBaseLayerButton.tsx`
+
+### Tile Layers
+
+- `src/layers/olsx-tile-layer/components/OLSXTileLayer.tsx`
+- `src/layers/olsx-tile-layer/types.ts`
+- `src/core/hooks/useMountLayer.ts`
 
 ### Vector Layers / Features / GIS Events
 
@@ -62,6 +75,8 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/controls/components/Controls.tsx`
 - `src/controls/components/ZoomButton.tsx`
 - `src/controls/components/ToggleBaseLayerButton.tsx`
+- `src/core/hooks/useZoom.ts`
+- `src/core/hooks/useToggleBaseLayer.ts`
 
 ### Demo / Usage Examples
 
@@ -71,8 +86,10 @@ Use it to decide which files to read before opening large parts of the repositor
 ## Navigation Notes
 
 - Public consumers should import from the package root unless they intentionally need internal files.
-- `BaseLayer` is a preset, not required for custom OpenLayers users; custom base-layer components can use `useMapRefsContext` or the compatibility `useMapContext`.
 - Map refs and map readiness are split into `MapRefsContext` and `MapReadyContext` so hooks can subscribe only to the part they need.
+- `useMapRefsContext` is the preferred escape hatch for direct OpenLayers object access; `useMapContext` remains as a compatibility hook that combines refs and readiness.
+- `useMountLayer` is the shared lifecycle helper for OpenLayers layer components; check it before adding another layer wrapper.
+- `OLSXTileLayer` is the generic public tile-layer wrapper. `BaseLayer` remains the opinionated street/satellite preset.
 - `OLSXVectorLayer` is the default compound vector API. `createVectorLayer` returns a typed compound component for user-defined feature types/data.
 - OpenLayers object lifecycle is intentionally kept in React components/hooks rather than hidden behind a closed abstraction.
 - `AGENTS.md` and `docs/rules/context-navigation.md` define how future agents should choose files.
