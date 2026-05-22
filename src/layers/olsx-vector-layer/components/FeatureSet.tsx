@@ -11,9 +11,9 @@
 import {
   useFeatureSetFeaturePointermove,
   useFeatureSetFeatureSingleclick,
-} from "./hooks/useFeatureSetFeatureEvent";
-import { useFeatureSetFeatures } from "./hooks/useFeatureSetFeatures";
-import type { FeatureSetProps } from "./types";
+} from "../hooks/useFeatureSetFeatureEvent";
+import { useFeatureSetFeatures } from "../hooks/useFeatureSetFeatures";
+import type { FeatureSetProps } from "../types";
 
 export function FeatureSet<
   TType extends string = string,

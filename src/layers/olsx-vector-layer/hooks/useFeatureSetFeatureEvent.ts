@@ -2,10 +2,10 @@ import type { MapBrowserEvent } from "ol";
 import type { FeatureLike } from "ol/Feature";
 import { useCallback, useEffect, useRef } from "react";
 import { FEATURE_DATA_KEY } from "../../../core/constants";
-import { useMapContext } from "../../../core/context";
-import { findFeatureAtEvent } from "../../../core/olUtils";
-import { isFeatureSetFeature } from "../../../core/olsxUtils";
-import { useVectorLayerContext } from "../vectorLayerContext";
+import { useMapRefsContext } from "../../../core/model/context";
+import { findFeatureAtEvent } from "../../../core/utils/olUtils";
+import { isFeatureSetFeature } from "../../../core/utils/olsxUtils";
+import { useVectorLayerContext } from "../model/vectorLayerContext";
 
 function useIsFeatureSetFeature(id: string, type: string) {
   return useCallback(
@@ -21,7 +21,7 @@ export function useFeatureSetFeatureSingleclick<
   type: TType,
   onClick: ((item: TData, feature: FeatureLike) => void) | undefined,
 ) {
-  const { mapRef, sourceRegistryRef } = useMapContext();
+  const { mapRef, sourceRegistryRef } = useMapRefsContext();
   const { id } = useVectorLayerContext();
 
   const predicate = useIsFeatureSetFeature(id, type);
@@ -63,7 +63,7 @@ export function useFeatureSetFeaturePointermove<
   type: TType,
   onHover: ((item: TData, feature: FeatureLike) => void) | undefined,
 ) {
-  const { mapRef, sourceRegistryRef } = useMapContext();
+  const { mapRef, sourceRegistryRef } = useMapRefsContext();
   const { id } = useVectorLayerContext();
 
   const predicate = useIsFeatureSetFeature(id, type);

@@ -4,15 +4,19 @@
  * @ai-domain public-api
  * @ai-depends controls, core contexts/types/hooks, map provider, vector layer compound API, base layer preset.
  * @ai-used-by Package consumers and playground examples importing from the library root.
- * @ai-keywords OLSXMap, BaseLayer, Controls, OLSXVectorLayer, createVectorLayer, useMapContext.
+ * @ai-keywords OLSXMap, BaseLayer, Controls, OLSXVectorLayer, createVectorLayer, useMapContext, useMapRefsContext, useMapReadyContext.
  * @ai-notes Keep root exports stable; prefer adding internal exports from feature barrels before exposing them here.
  */
 
-export * from "./controls/Controls";
+export * from "./controls";
 export * from "./core/constants";
-export { useMapContext } from "./core/context";
+export {
+  useMapContext,
+  useMapReadyContext,
+  useMapRefsContext,
+} from "./core/model/context";
+export * from "./core/model/useMapControls";
 export * from "./core/types";
-export * from "./core/useMapControls";
-export * from "./layers/OLSXMap";
-export * from "./layers/OLSXVectorLayer";
-export * from "./presets/BaseLayer";
+export * from "./layers/olsx-map";
+export * from "./layers/olsx-vector-layer";
+export * from "./presets/base-layer";

@@ -3,7 +3,7 @@ import {
   FEATURE_DATA_KEY,
   FEATURE_SET_LAYER_ID_KEY,
   FEATURE_SET_TYPE_KEY,
-} from "./constants";
+} from "../constants";
 
 export type GettableFeature = FeatureLike & {
   get: (key: string) => unknown;

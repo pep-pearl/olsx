@@ -1,6 +1,6 @@
 import OSM from "ol/source/OSM";
 import XYZ from "ol/source/XYZ";
-import type { BaseLayerType } from "./types";
+import type { BaseLayerType } from "../types";
 
 export function createBaseSource(type: BaseLayerType) {
   return type === "street"

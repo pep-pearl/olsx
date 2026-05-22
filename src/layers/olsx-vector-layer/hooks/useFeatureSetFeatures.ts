@@ -5,9 +5,9 @@ import {
   FEATURE_SET_LAYER_ID_KEY,
   FEATURE_SET_TYPE_KEY,
 } from "../../../core/constants";
-import { useMapContext } from "../../../core/context";
+import { useMapRefsContext } from "../../../core/model/context";
+import { useVectorLayerContext } from "../model/vectorLayerContext";
 import type { FeatureSetProps } from "../types";
-import { useVectorLayerContext } from "../vectorLayerContext";
 
 export function useFeatureSetFeatures<
   TType extends string,
@@ -21,7 +21,7 @@ export function useFeatureSetFeatures<
   FeatureSetProps<TType, TData>,
   "data" | "getGeometry" | "getId" | "type"
 >) {
-  const { mapRef, sourceRegistryRef } = useMapContext();
+  const { mapRef, sourceRegistryRef } = useMapRefsContext();
   const { id } = useVectorLayerContext();
 
   useEffect(() => {

@@ -1,5 +1,5 @@
-import { useBaseLayerContext, useMapContext } from "../core/context";
-import type { BaseLayerType } from "../core/types";
+import { useBaseLayerContext, useMapReadyContext } from "../../core/model/context";
+import { useToggleBaseLayer } from "../hooks/useToggleBaseLayer";
 
 type ToggleBaseLayerButtonProps = {
   className?: string;
@@ -14,16 +14,9 @@ type Props = ToggleBaseLayerButtonProps &
   Partial<ToggleBaseLayerButtonPropsWithChildren>;
 
 export function ToggleBaseLayerButton({ className, style, children }: Props) {
-  const { isMapReady } = useMapContext();
-  const { baseLayerType, setBaseLayerType } = useBaseLayerContext();
-  function toggle() {
-    if (!baseLayerType) return;
-    const currentType = baseLayerType;
-    const nextType: BaseLayerType =
-      currentType === "street" ? "satellite" : "street";
-
-    setBaseLayerType(nextType);
-  }
+  const { isMapReady } = useMapReadyContext();
+  const { baseLayerType } = useBaseLayerContext();
+  const { toggle } = useToggleBaseLayer();
 
   if (!isMapReady) return null;
 

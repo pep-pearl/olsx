@@ -1,12 +1,12 @@
 import TileLayer from "ol/layer/Tile";
-import { useBaseLayerContext, useMapContext } from "./context";
-import { createBaseSource } from "./createBaseLayer";
-import type { BaseLayerType } from "./types";
+import type { BaseLayerType } from "../types";
+import { createBaseSource } from "../utils/createBaseLayer";
+import { useBaseLayerContext, useMapRefsContext } from "./context";
 
 export function useToggleBaseLayerType(
   setType?: React.Dispatch<React.SetStateAction<BaseLayerType>>,
 ) {
-  const { mapRef } = useMapContext();
+  const { mapRef } = useMapRefsContext();
   const { baseLayerType, setBaseLayerType } = useBaseLayerContext();
 
   return function () {

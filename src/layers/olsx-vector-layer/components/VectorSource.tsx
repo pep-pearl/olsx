@@ -1,10 +1,10 @@
 import OlVectorSource from "ol/source/Vector";
 import { useEffect } from "react";
-import { useMapContext } from "../../core/context";
-import { useVectorLayerContext } from "./vectorLayerContext";
+import { useMapRefsContext } from "../../../core/model/context";
+import { useVectorLayerContext } from "../model/vectorLayerContext";
 
 export function VectorSource() {
-  const { mapRef, layerRegistryRef, sourceRegistryRef } = useMapContext();
+  const { mapRef, layerRegistryRef, sourceRegistryRef } = useMapRefsContext();
   const { id } = useVectorLayerContext();
 
   useEffect(() => {
