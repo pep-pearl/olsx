@@ -1,3 +1,13 @@
+/**
+ * @ai-purpose React provider that owns the OpenLayers Map instance and shared layer/source registries.
+ * @ai-entry true
+ * @ai-domain map
+ * @ai-depends core context, OpenLayers Map/View, BaseLayerContext.
+ * @ai-used-by Root package export, BaseLayer, Controls, OLSXVectorLayer children.
+ * @ai-keywords OLSXMap, MapContext, BaseLayerContext, layerRegistryRef, sourceRegistryRef.
+ * @ai-notes Preserve provider values and child render timing; many components depend on isMapReady.
+ */
+
 import { View } from "ol";
 import type { Layer } from "ol/layer";
 import OlMap from "ol/Map";
@@ -48,7 +58,6 @@ export const OLSXMap = forwardRef<OLSXMapRef, MapProps>(
     const layerRegistryRef = useRef<Map<string, Layer>>(new Map());
     const sourceRegistryRef = useRef<Map<string, VectorSource>>(new Map());
 
-    // 현재 활성화된 base layer 타입을 저장하는 state. 초기값은 null로 설정하여, 실제로 어떤 레이어도 활성화되지 않은 상태를 나타냄. BaseLayer 컴포넌트에서 toggle 함수를 통해 이 값을 업데이트하면서, 현재 어떤 base layer가 활성화되어 있는지를 관리함
     const [baseLayerType, setBaseLayerType] = useState<BaseLayerType | null>(
       null,
     );

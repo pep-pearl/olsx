@@ -1,3 +1,13 @@
+/**
+ * @ai-purpose Typed factory for the compound vector layer API used by React consumers.
+ * @ai-entry true
+ * @ai-domain public-api
+ * @ai-depends VectorLayer, VectorSource, FeatureSet, vector FeatureSetProps.
+ * @ai-used-by src/layers/OLSXVectorLayer/index.ts and consumers needing typed layer-specific data.
+ * @ai-keywords createVectorLayer, defineOlsxVectorLayer, OLSXVectorLayerCompound, FeatureSet.
+ * @ai-notes Preserve the compound component shape: Layer.Source and Layer.FeatureSet.
+ */
+
 import type { ComponentType, LazyExoticComponent } from "react";
 import { FeatureSet } from "./FeatureSet";
 import { OLSXVectorLayer, type VectorLayerProps } from "./VectorLayer";

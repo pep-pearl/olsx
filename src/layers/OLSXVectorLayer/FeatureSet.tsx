@@ -1,3 +1,13 @@
+/**
+ * @ai-purpose Declarative bridge that turns typed data into OpenLayers features and feature events.
+ * @ai-entry false
+ * @ai-domain gis
+ * @ai-depends useFeatureSetFeatures, useFeatureSetFeatureEvent, FeatureSetProps.
+ * @ai-used-by OLSXVectorLayer.FeatureSet compound component.
+ * @ai-keywords FeatureSet, data, getGeometry, getId, onClick, onHover.
+ * @ai-notes Feature identity and event data are stored on OpenLayers features by the hooks.
+ */
+
 import {
   useFeatureSetFeaturePointermove,
   useFeatureSetFeatureSingleclick,

@@ -1,4 +1,13 @@
-import { getUid } from "ol";
+/**
+ * @ai-purpose React wrapper for an OpenLayers vector layer and its typed feature-set children.
+ * @ai-entry true
+ * @ai-domain gis
+ * @ai-depends OLSXMap registry context, VectorLayerContext, vector style cache utilities.
+ * @ai-used-by OLSXVectorLayer compound API and createVectorLayer typed factory.
+ * @ai-keywords OLSXVectorLayer, VectorLayerProps, VectorLayerRef, style, cacheStyle, types.
+ * @ai-notes Keep OpenLayers layer lifecycle separate from FeatureSet data/source lifecycle.
+ */
+
 import type { FeatureLike } from "ol/Feature";
 import OlVectorLayer from "ol/layer/Vector";
 import type { Style } from "ol/style";
@@ -10,6 +19,7 @@ import {
   useState,
 } from "react";
 import { useMapContext } from "../../core/context";
+import { getFeatureStyleCacheKey } from "./styleCache";
 import { VectorLayerContext } from "./vectorLayerContext";
 
 type VectorStyleResult = Style | Style[] | void;
@@ -29,13 +39,6 @@ export type VectorLayerRef = {
   isVectorLayerReady: boolean;
 };
 
-function getFeatureStyleCacheKey(feature: FeatureLike, type?: string) {
-  const featureId =
-    typeof feature.getId === "function" ? feature.getId() : undefined;
-
-  return [featureId ?? getUid(feature), type ?? ""].join(":");
-}
-
 function VectorLayer<TTypes extends readonly string[] = readonly string[]>(
   { id, types, children, style, cacheStyle = true }: VectorLayerProps<TTypes>,
   ref: React.ForwardedRef<VectorLayerRef>,
@@ -46,9 +49,9 @@ function VectorLayer<TTypes extends readonly string[] = readonly string[]>(
   const styleCacheRef = useRef<Map<string, VectorStyleResult>>(new Map());
 
   useEffect(() => {
-    if (!mapRef?.current || !layerRegistryRef?.current) return;
-    const layerRegistry = layerRegistryRef?.current;
-    if (layerRegistry?.has(id)) {
+    if (!mapRef.current || !layerRegistryRef.current) return;
+    const layerRegistry = layerRegistryRef.current;
+    if (layerRegistry.has(id)) {
       console.warn(`Layer with id "${id}" already exists. Skipping creation.`);
       return;
     }
@@ -57,13 +60,13 @@ function VectorLayer<TTypes extends readonly string[] = readonly string[]>(
     const vectorLayer = new OlVectorLayer();
 
     map.addLayer(vectorLayer);
-    layerRegistry?.set(id, vectorLayer);
+    layerRegistry.set(id, vectorLayer);
     setIsVectorLayerReady(true);
     vectorLayerRef.current = vectorLayer;
 
     return () => {
       map.removeLayer(vectorLayer);
-      layerRegistry?.delete(id);
+      layerRegistry.delete(id);
       setIsVectorLayerReady(false);
       vectorLayerRef.current = null;
     };
@@ -83,11 +86,6 @@ function VectorLayer<TTypes extends readonly string[] = readonly string[]>(
 
     if (!layer) return;
 
-    /**
-     * style 함수 자체가 바뀌면 기존 캐시는 버린다.
-     * selectedId, theme, hoverId 같은 값이 useCallback deps로 들어가 있으면
-     * style 함수 identity가 바뀌고 여기서 캐시가 초기화됨.
-     */
     styleCacheRef.current.clear();
 
     if (!style) {

@@ -23,6 +23,7 @@ type SeoulPlace = {
 };
 
 const SeoulVectorLayer = createVectorLayer<typeof types, SeoulPlace>();
+void SeoulVectorLayer;
 
 function App() {
   const seoulDummyData = useMemo<SeoulPlace[]>(
@@ -127,7 +128,10 @@ function App() {
           data={seoulDummyData}
           getId={getId}
           getGeometry={getGeometry}
-          onClick={(item, feat) => {}}
+          onClick={(item, feat) => {
+            void item;
+            void feat;
+          }}
         />
       </OLSXVectorLayer>
     </OLSXMap>
