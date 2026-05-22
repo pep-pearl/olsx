@@ -25,6 +25,7 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/layers/olsx-map/` creates the OpenLayers `Map`, owns shared registries, and provides React contexts.
 - `src/layers/olsx-tile-layer/` provides the generic tile-layer component built on the shared layer-mount hook.
 - `src/layers/olsx-vector-layer/` contains the vector layer compound API, source mounting, feature-set data bridge, feature events, and vector-specific types.
+- `src/olsx-overlay/` contains the React portal wrapper for OpenLayers overlays.
 - `src/presets/base-layer/` is the built-in replaceable base-map preset for street/satellite tile layers.
 - `src/controls/` contains default UI controls that consume map/base-layer contexts.
 - `playground/` is the Vite demo app used for local manual validation.
@@ -38,6 +39,7 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/layers/olsx-tile-layer/index.ts`
 - `src/layers/olsx-vector-layer/index.ts`
 - `src/layers/olsx-vector-layer/utils/createVectorLayer.ts`
+- `src/olsx-overlay/index.ts`
 
 ### Map Provider / Lifecycle
 
@@ -70,6 +72,12 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/layers/olsx-vector-layer/hooks/useFeatureSetFeatureEvent.ts`
 - `src/layers/olsx-vector-layer/types.ts`
 
+### Overlays / Popups
+
+- `src/olsx-overlay/components/OLSXOverlay.tsx`
+- `src/olsx-overlay/types.ts`
+- `playground/App.tsx`
+
 ### Default Controls
 
 - `src/controls/components/Controls.tsx`
@@ -91,5 +99,6 @@ Use it to decide which files to read before opening large parts of the repositor
 - `useMountLayer` is the shared lifecycle helper for OpenLayers layer components; check it before adding another layer wrapper.
 - `OLSXTileLayer` is the generic public tile-layer wrapper. `BaseLayer` remains the opinionated street/satellite preset.
 - `OLSXVectorLayer` is the default compound vector API. `createVectorLayer` returns a typed compound component for user-defined feature types/data.
+- `OLSXOverlay` mounts React children into an OpenLayers `Overlay` via a React portal; use it for popups, labels, callouts, and map-anchored UI.
 - OpenLayers object lifecycle is intentionally kept in React components/hooks rather than hidden behind a closed abstraction.
 - `AGENTS.md` and `docs/rules/context-navigation.md` define how future agents should choose files.

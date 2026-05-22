@@ -1,15 +1,18 @@
+import { Coordinate } from "ol/coordinate";
 import { FeatureLike } from "ol/Feature";
 import Point from "ol/geom/Point";
 import { fromLonLat } from "ol/proj";
 import { Fill, Stroke, Style } from "ol/style";
 import CircleStyle from "ol/style/Circle";
 import Text from "ol/style/Text";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   BaseLayer,
   Controls,
   createVectorLayer,
   OLSXMap,
+  OLSXOverlay,
+  OLSXOverlayRef,
   OLSXVectorLayer,
 } from "../src";
 
@@ -103,6 +106,18 @@ function App() {
     });
   }, []);
 
+  const [coor, setCoor] = useState<Coordinate | null>(null);
+
+  function handleClickFeature(item: SeoulPlace) {
+    setCoor(fromLonLat([item.lon, item.lat]));
+  }
+
+  const overlayRef = useRef<OLSXOverlayRef>(null);
+
+  function overlayClose() {
+    overlayRef.current?.hide();
+  }
+
   return (
     <OLSXMap style={{ width: "100dvw", height: "100dvh" }}>
       <BaseLayer />
@@ -117,6 +132,24 @@ function App() {
           getGeometry={getGeometry}
         />
       </SeoulVectorLayer> */}
+
+      <OLSXOverlay
+        ref={overlayRef}
+        id="selected-overlay"
+        coordinate={coor}
+        positioning="bottom-center"
+        offset={[0, -16]}
+        autoPan={false}
+        stopEvent
+      >
+        <div style={{ background: "white", padding: 16, borderRadius: 8 }}>
+          <button type="button" onClick={overlayClose}>
+            X
+          </button>
+          Overlay content
+        </div>
+      </OLSXOverlay>
+
       <Controls>
         <Controls.ToggleBaseLayerButton />
         <Controls.ZoomButton />
@@ -128,9 +161,8 @@ function App() {
           data={seoulDummyData}
           getId={getId}
           getGeometry={getGeometry}
-          onClick={(item, feat) => {
-            void item;
-            void feat;
+          onClick={(item) => {
+            handleClickFeature(item);
           }}
         />
       </OLSXVectorLayer>

@@ -19,4 +19,5 @@ export * from "./core/types";
 export * from "./layers/olsx-map";
 export * from "./layers/olsx-tile-layer";
 export * from "./layers/olsx-vector-layer";
+export * from "./olsx-overlay";
 export * from "./presets/base-layer";
