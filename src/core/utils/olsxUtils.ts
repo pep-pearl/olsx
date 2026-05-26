@@ -4,7 +4,7 @@
  * @ai-domain gis
  * @ai-depends FeatureLike, OLSX constants
  * @ai-used-by Event hooks (useFeatureEvent, useFeaturesEvent)
- * @ai-keywords isFeature, isFeatureInFeatures, isGettableFeature
+ * @ai-keywords isFeature, isFeatureInFeatures, isGettableFeature, buildListenerKey, getListenerKey
  */
 
 import type { FeatureLike } from "ol/Feature";
@@ -30,14 +30,14 @@ export function isFeatureInFeatures(
   feature: FeatureLike,
   layerId: string,
   featuresId: string,
-  type: string,
+  featureType: string,
 ): feature is GettableFeature {
   if (!isGettableFeature(feature)) return false;
 
   return (
     feature.get(FEATURE_LAYER_ID_KEY) === layerId &&
     feature.get(FEATURE_GROUP_ID_KEY) === featuresId &&
-    feature.get(FEATURE_TYPE_KEY) === type &&
+    feature.get(FEATURE_TYPE_KEY) === featureType &&
     Boolean(feature.get(FEATURE_PROPERTIES_KEY))
   );
 }

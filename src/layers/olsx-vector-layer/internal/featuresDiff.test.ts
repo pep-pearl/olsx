@@ -30,7 +30,7 @@ test("upsertFeatures adds, removes, and updates features by data id", () => {
     getGeometry,
     layerId: "places",
     featuresId: "markers",
-    type: "marker",
+    featureType: "marker",
     vectorSource,
     featuresById,
   });
@@ -49,7 +49,7 @@ test("upsertFeatures adds, removes, and updates features by data id", () => {
     getGeometry,
     layerId: "places",
     featuresId: "markers",
-    type: "marker",
+    featureType: "marker",
     vectorSource,
     featuresById,
   });

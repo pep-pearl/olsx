@@ -5,7 +5,7 @@ import type { FeaturesRegistry } from "../registry/featuresRegistry";
 
 export const VectorLayerContext = createContext<{
   id: string;
-  types: readonly string[];
+  featureTypes: readonly string[];
   vectorSourceRef: RefObject<OlVectorSource | null>;
   featuresRegistryRef: RefObject<FeaturesRegistry>;
 } | null>(null);

@@ -1,9 +1,13 @@
 import type Feature from "ol/Feature";
 import { type FeatureLike } from "ol/Feature";
 import type { Geometry } from "ol/geom";
+import type { Type } from "ol/geom/Geometry";
+import Draw from "ol/interaction/Draw";
 import type VectorLayer from "ol/layer/Vector";
 import type OlVectorSource from "ol/source/Vector";
 import type { Style } from "ol/style";
+import type { FlatStyleLike } from "ol/style/flat";
+import type { StyleLike } from "ol/style/Style";
 import type { FeaturesRegistry } from "./registry/featuresRegistry";
 
 export type OLSXFeaturesProps<
@@ -11,7 +15,7 @@ export type OLSXFeaturesProps<
   TData extends object = object,
 > = {
   id: string;
-  type: TType;
+  featureType: TType;
   getId: (item: TData) => string;
   getGeometry: (item: TData) => Geometry;
   data: Array<TData>;
@@ -27,8 +31,11 @@ export type OLSXVectorLayerProps<
   TTypes extends readonly string[] = readonly string[],
 > = {
   id: string;
-  types?: TTypes;
-  style?: (feature: FeatureLike, type?: TTypes[number]) => VectorStyleResult;
+  featureTypes?: TTypes;
+  style?: (
+    feature: FeatureLike,
+    featureType?: TTypes[number],
+  ) => VectorStyleResult;
   children?: React.ReactNode;
   cacheStyle?: boolean;
 };
@@ -43,7 +50,7 @@ export type OLSXFeatureProps<
   TData extends object = object,
 > = {
   id: string;
-  type?: TType;
+  featureType?: TType;
   geometry?: Geometry;
   data: TData;
   onClick?: (item: TData, feature: FeatureLike) => void;
@@ -58,4 +65,13 @@ export type OLSXVectorSourceRef = {
   getVectorSource: () => OlVectorSource | null;
   getRegistry: () => FeaturesRegistry;
   isSourceReady: boolean;
+};
+
+export type OLSXDrawProps = {
+  type?: Type;
+  style?: StyleLike | FlatStyleLike;
+};
+
+export type OLSXDrawRef = {
+  getDraw: () => Draw | null;
 };

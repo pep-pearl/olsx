@@ -22,7 +22,7 @@ export function OLSXFeatures<
 >(
   {
     id,
-    type,
+    featureType,
     data,
     getGeometry,
     getId,
@@ -36,11 +36,11 @@ export function OLSXFeatures<
     data,
     getGeometry,
     getId,
-    type,
+    featureType,
   });
 
-  useFeaturesSingleclick<TType, TData>(id, type, onClick);
-  useFeaturesPointermove<TType, TData>(id, type, onHover);
+  useFeaturesSingleclick<TType, TData>(id, featureType, onClick);
+  useFeaturesPointermove<TType, TData>(id, featureType, onHover);
 
   useImperativeHandle(
     ref,

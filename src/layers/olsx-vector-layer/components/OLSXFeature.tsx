@@ -12,7 +12,7 @@ export function OLSXFeatureComp<
 >(
   {
     id: featureId,
-    type,
+    featureType,
     geometry,
     data,
     onClick,
@@ -20,7 +20,7 @@ export function OLSXFeatureComp<
   }: OLSXFeatureProps<TType, TData>,
   ref: React.ForwardedRef<OLSXFeatureRef>,
 ) {
-  const { featureRef } = useFeature({ featureId, type, geometry, data });
+  const { featureRef } = useFeature({ featureId, featureType, geometry, data });
 
   useFeatureSingleclick<TData>(featureId, onClick);
   useFeaturePointermove<TData>(featureId, onHover);

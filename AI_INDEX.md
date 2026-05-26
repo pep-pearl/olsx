@@ -76,6 +76,7 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/layers/olsx-vector-layer/components/OLSXVectorSource.tsx`
 - `src/layers/olsx-vector-layer/components/OLSXFeature.tsx`
 - `src/layers/olsx-vector-layer/components/OLSXFeatures.tsx`
+- `src/layers/olsx-vector-layer/components/OLSXDraw.tsx`
 - `src/layers/olsx-vector-layer/internal/useOLSXVectorLayer.ts`
 - `src/layers/olsx-vector-layer/internal/useFeature.ts`
 - `src/layers/olsx-vector-layer/internal/useFeatureEvent.ts`

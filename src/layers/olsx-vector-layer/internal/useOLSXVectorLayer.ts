@@ -43,20 +43,20 @@ export function useOLSXVectorLayer<TTypes extends readonly string[]>({
     const styleCache = cacheStyle ? styleCacheRef.current : undefined;
 
     layer.setStyle((feature) => {
-      const type = feature.get("type") as TTypes[number] | undefined;
+      const featureType = feature.get("featureType") as TTypes[number] | undefined;
 
       if (!cacheStyle) {
-        return style(feature, type);
+        return style(feature, featureType);
       }
 
-      const cacheKey = getFeatureStyleCacheKey(feature, String(type ?? ""));
+      const cacheKey = getFeatureStyleCacheKey(feature, String(featureType ?? ""));
       const cached = styleCache?.get(cacheKey);
 
       if (cached !== undefined) {
         return cached;
       }
 
-      const nextStyle = style(feature, type);
+      const nextStyle = style(feature, featureType);
 
       if (nextStyle !== undefined) {
         styleCache?.set(cacheKey, nextStyle);

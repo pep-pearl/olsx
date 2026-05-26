@@ -20,12 +20,12 @@ import { useVectorLayerContext } from "../internal/vectorLayerContext";
 
 export function useFeature({
   featureId,
-  type = "",
+  featureType = "",
   geometry,
   data,
 }: {
   featureId: string;
-  type?: string;
+  featureType?: string;
   geometry?: Geometry;
   data: object;
 }) {
@@ -43,10 +43,10 @@ export function useFeature({
 
     const feature = new Feature({
       geometry,
-      type,
+      featureType,
       [FEATURE_ID_KEY]: featureId,
       [FEATURE_LAYER_ID_KEY]: layerId,
-      [FEATURE_TYPE_KEY]: type,
+      [FEATURE_TYPE_KEY]: featureType,
       [FEATURE_PROPERTIES_KEY]: data,
     });
     feature.setId(featureId);
@@ -66,7 +66,7 @@ export function useFeature({
     geometry,
     layerId,
     data,
-    type,
+    featureType,
     vectorSourceRef,
   ]);
 

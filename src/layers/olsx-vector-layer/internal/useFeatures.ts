@@ -21,10 +21,10 @@ export function useFeatures<TType extends string, TData extends object>({
   getGeometry,
   getId,
   id: featuresId,
-  type,
+  featureType,
 }: Pick<
   OLSXFeaturesProps<TType, TData>,
-  "data" | "getGeometry" | "getId" | "id" | "type"
+  "data" | "getGeometry" | "getId" | "id" | "featureType"
 >) {
   const {
     id: layerId,
@@ -49,7 +49,7 @@ export function useFeatures<TType extends string, TData extends object>({
       getId,
       layerId,
       featuresId,
-      type,
+      featureType,
       vectorSource,
       featuresById: featuresByIdRef.current,
     });
@@ -62,7 +62,7 @@ export function useFeatures<TType extends string, TData extends object>({
     getGeometry,
     getId,
     layerId,
-    type,
+    featureType,
     vectorSourceRef,
   ]);
 

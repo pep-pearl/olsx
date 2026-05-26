@@ -31,11 +31,11 @@ import { useVectorLayerContext } from "./vectorLayerContext";
 function useIsFeaturesFeature(
   layerId: string,
   featuresId: string,
-  type: string,
+  featureType: string,
 ) {
   return useCallback(
-    (feat: FeatureLike) => isFeatureInFeatures(feat, layerId, featuresId, type),
-    [featuresId, layerId, type],
+    (feat: FeatureLike) => isFeatureInFeatures(feat, layerId, featuresId, featureType),
+    [featuresId, layerId, featureType],
   );
 }
 
@@ -44,13 +44,13 @@ export function useFeaturesSingleclick<
   TData extends object,
 >(
   featuresId: string,
-  type: TType,
+  featureType: TType,
   onClick: ((item: TData, feature: FeatureLike) => void) | undefined,
 ) {
   const { mapRef, listenerRegistryRef } = useMapRefsContext();
   const { id: layerId, vectorSourceRef } = useVectorLayerContext();
 
-  const predicate = useIsFeaturesFeature(layerId, featuresId, type);
+  const predicate = useIsFeaturesFeature(layerId, featuresId, featureType);
 
   useEffect(() => {
     const map = mapRef?.current;
@@ -96,13 +96,13 @@ export function useFeaturesPointermove<
   TData extends object,
 >(
   featuresId: string,
-  type: TType,
+  featureType: TType,
   onHover: ((item: TData, feature: FeatureLike) => void) | undefined,
 ) {
   const { mapRef, listenerRegistryRef } = useMapRefsContext();
   const { id: layerId, vectorSourceRef } = useVectorLayerContext();
 
-  const predicate = useIsFeaturesFeature(layerId, featuresId, type);
+  const predicate = useIsFeaturesFeature(layerId, featuresId, featureType);
 
   const lastHoveredFeatureRef = useRef<FeatureLike | null>(null);
 

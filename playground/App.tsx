@@ -157,18 +157,23 @@ function App() {
         <Controls.BaseLayerToggle />
         <Controls.Zoom />
       </Controls>
-      <OLSXVectorLayer id="another-layer" types={types} style={markerStyle}>
+      <OLSXVectorLayer
+        id="another-layer"
+        featureTypes={types}
+        style={markerStyle}
+      >
         <OLSXVectorLayer.Source />
-        <OLSXVectorLayer.Features
+        {/* <OLSXVectorLayer.Features
           id="seoul-places"
-          type="type1"
+          featureType="type1"
           data={seoulDummyData}
           getId={getId}
           getGeometry={getGeometry}
           onClick={(item) => {
             handleClickFeature(item);
           }}
-        />
+        /> */}
+        <OLSXVectorLayer.Draw type="Polygon" />
       </OLSXVectorLayer>
     </OLSXMap>
   );

@@ -20,7 +20,7 @@ function OLSXVectorLayerComp<
 >(
   {
     id,
-    types,
+    featureTypes,
     children,
     style,
     cacheStyle = true,
@@ -47,11 +47,11 @@ function OLSXVectorLayerComp<
   const vectorLayerContextValue = useMemo(
     () => ({
       id,
-      types: types ?? [],
+      featureTypes: featureTypes ?? [],
       vectorSourceRef,
       featuresRegistryRef,
     }),
-    [id, types],
+    [id, featureTypes],
   );
 
   return (
