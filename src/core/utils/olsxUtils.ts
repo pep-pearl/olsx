@@ -1,8 +1,8 @@
 import type { FeatureLike } from "ol/Feature";
 import {
-  FEATURE_PROPERTIES_KEY,
   FEATURE_GROUP_ID_KEY,
   FEATURE_LAYER_ID_KEY,
+  FEATURE_PROPERTIES_KEY,
   FEATURE_TYPE_KEY,
 } from "../constants";
 
@@ -32,7 +32,7 @@ export function isFeaturesFeature(
   );
 }
 
-export function isFeatureSetFeature(
+export function isFeatureInFeatures(
   feature: FeatureLike,
   layerId: string,
   type: string,

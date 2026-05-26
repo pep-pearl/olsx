@@ -10,6 +10,7 @@
 
 import { Layer } from "ol/layer";
 import { useEffect, useRef, useState } from "react";
+import { mountLayerById } from "../internal/layerLifecycle";
 import { useMapRefsContext } from "../model/context";
 
 export function useMountLayer<T extends Layer>(
@@ -31,24 +32,14 @@ export function useMountLayer<T extends Layer>(
 
     if (!map || !layerRegistry) return;
 
-    if (layerRegistry.has(id)) {
-      console.warn(`Layer with id "${id}" already exists. Skipping creation.`);
-      return;
-    }
-
-    const layer = createLayerRef.current();
-
-    map.addLayer(layer);
-    layerRegistry.set(id, layer);
-    layerRef.current = layer;
-    setIsLayerReady(true);
-
-    return () => {
-      map.removeLayer(layer);
-      layerRegistry.delete(id);
-      layerRef.current = null;
-      setIsLayerReady(false);
-    };
+    return mountLayerById({
+      id,
+      map,
+      layerRegistry,
+      layerRef,
+      createLayer: () => createLayerRef.current(),
+      setReady: setIsLayerReady,
+    });
   }, [id, mapRef, layerRegistryRef]);
 
   return { isLayerReady, layerRef };

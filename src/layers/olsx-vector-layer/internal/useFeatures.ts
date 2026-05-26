@@ -1,13 +1,10 @@
-import Feature from "ol/Feature";
-import { useEffect } from "react";
-import {
-  FEATURE_GROUP_ID_KEY,
-  FEATURE_ID_KEY,
-  FEATURE_PROPERTIES_KEY,
-  FEATURE_LAYER_ID_KEY,
-  FEATURE_TYPE_KEY,
-} from "../../../core/constants";
+import { useEffect, useRef } from "react";
 import { useVectorLayerContext } from "./vectorLayerContext";
+import {
+  removeFeatures,
+  type FeatureDiffState,
+  upsertFeatures,
+} from "./featuresDiff";
 import type { FeaturesProps } from "../types";
 
 export function useFeatures<
@@ -25,6 +22,7 @@ export function useFeatures<
 >) {
   const { id: layerId, vectorSourceRef, featuresRegistryRef } =
     useVectorLayerContext();
+  const featuresByIdRef = useRef<FeatureDiffState>(new Map());
 
   useEffect(() => {
     const vectorSource = vectorSourceRef.current;
@@ -36,32 +34,18 @@ export function useFeatures<
     }
     const featuresRegistry = featuresRegistryRef.current;
 
-    const features = data.map((item) => {
-      const featureId = getId(item);
-      const feature = new Feature({
-        geometry: getGeometry(item),
-        type,
-        [FEATURE_ID_KEY]: featureId,
-        [FEATURE_GROUP_ID_KEY]: featuresId,
-        [FEATURE_LAYER_ID_KEY]: layerId,
-        [FEATURE_TYPE_KEY]: type,
-        [FEATURE_PROPERTIES_KEY]: item,
-      });
-
-      feature.setId(featureId);
-
-      return feature;
+    const features = upsertFeatures({
+      data,
+      getGeometry,
+      getId,
+      layerId,
+      featuresId,
+      type,
+      vectorSource,
+      featuresById: featuresByIdRef.current,
     });
 
-    vectorSource.addFeatures(features);
     featuresRegistry.set(featuresId, features);
-
-    return () => {
-      features.forEach((feature) => {
-        vectorSource.removeFeature(feature);
-      });
-      featuresRegistry.delete(featuresId);
-    };
   }, [
     data,
     featuresId,
@@ -72,4 +56,19 @@ export function useFeatures<
     type,
     vectorSourceRef,
   ]);
+
+  useEffect(() => {
+    const vectorSource = vectorSourceRef.current;
+    const featuresById = featuresByIdRef.current;
+    const featuresRegistry = featuresRegistryRef.current;
+
+    return () => {
+      if (vectorSource) {
+        removeFeatures(vectorSource, featuresById);
+      } else {
+        featuresById.clear();
+      }
+      featuresRegistry.delete(featuresId);
+    };
+  }, [featuresId, featuresRegistryRef, vectorSourceRef]);
 }

@@ -1,6 +1,7 @@
 import OlVectorSource from "ol/source/Vector";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { useMapRefsContext } from "../../../core/model/context";
+import { mountVectorSource } from "../internal/vectorSourceLifecycle";
 import { useVectorLayerContext } from "../internal/vectorLayerContext";
 import type { OLSXVectorSourceRef } from "../types";
 
@@ -25,31 +26,22 @@ function OLSXVectorSourceComp(
   useEffect(() => {
     if (!mapRef?.current || !layerRegistryRef?.current || !sourceRegistryRef)
       return;
-    const layerRegistry = layerRegistryRef?.current;
-    if (!layerRegistry?.has(id)) {
-      console.warn(
-        `Layer with id "${id}" does not exist in layer registry. Source will not be set.`,
-      );
-      return;
-    }
-    const sourceRegistry = sourceRegistryRef?.current;
-    if (sourceRegistry?.has(id)) {
-      console.warn(`Source with id "${id}" already exists. Skipping creation.`);
-      return;
-    }
-    const featuresRegistry = featuresRegistryRef.current;
-    const vectorSource = new OlVectorSource();
-    vectorSourceRef.current = vectorSource;
-    featuresRegistry.clear();
-    layerRegistry.get(id)?.setSource(vectorSource);
-    sourceRegistry.set(id, vectorSource);
+
+    const cleanup = mountVectorSource({
+      id,
+      layerRegistry: layerRegistryRef.current,
+      sourceRegistry: sourceRegistryRef.current,
+      sourceRef: vectorSourceRef,
+      createSource: () => new OlVectorSource(),
+      clearFeaturesRegistry: () => featuresRegistryRef.current.clear(),
+    });
+
+    if (!cleanup) return;
+
     setIsSourceReady(true);
 
     return () => {
-      layerRegistry?.get(id)?.setSource(null);
-      sourceRegistry?.delete(id);
-      featuresRegistry.clear();
-      vectorSourceRef.current = null;
+      cleanup();
       setIsSourceReady(false);
     };
   }, [

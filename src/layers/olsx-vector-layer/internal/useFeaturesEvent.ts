@@ -2,6 +2,10 @@ import type { MapBrowserEvent } from "ol";
 import type { FeatureLike } from "ol/Feature";
 import { useCallback, useEffect, useRef } from "react";
 import { FEATURE_PROPERTIES_KEY } from "../../../core/constants";
+import {
+  registerMapListener,
+  type MapEventTarget,
+} from "../../../core/listeners/listenerRegistry";
 import { useMapRefsContext } from "../../../core/model/context";
 import { findFeatureAtEvent } from "../../../core/utils/olUtils";
 import { isFeaturesFeature } from "../../../core/utils/olsxUtils";
@@ -22,7 +26,7 @@ export function useFeaturesSingleclick<
   type: TType,
   onClick: ((item: TData, feature: FeatureLike) => void) | undefined,
 ) {
-  const { mapRef } = useMapRefsContext();
+  const { mapRef, listenerRegistryRef } = useMapRefsContext();
   const { id: layerId, vectorSourceRef } = useVectorLayerContext();
 
   const predicate = useIsFeaturesFeature(layerId, featuresId, type);
@@ -48,12 +52,22 @@ export function useFeaturesSingleclick<
       onClick(item, feature);
     };
 
-    map.on("singleclick", handleClick);
-
-    return () => {
-      map.un("singleclick", handleClick);
-    };
-  }, [featuresId, layerId, mapRef, onClick, predicate, vectorSourceRef]);
+    return registerMapListener(
+      listenerRegistryRef.current,
+      map as unknown as MapEventTarget,
+      `features:${layerId}:${featuresId}:singleclick`,
+      "singleclick",
+      handleClick as (event: never) => void,
+    );
+  }, [
+    featuresId,
+    layerId,
+    listenerRegistryRef,
+    mapRef,
+    onClick,
+    predicate,
+    vectorSourceRef,
+  ]);
 }
 export function useFeaturesPointermove<
   TType extends string,
@@ -63,7 +77,7 @@ export function useFeaturesPointermove<
   type: TType,
   onHover: ((item: TData, feature: FeatureLike) => void) | undefined,
 ) {
-  const { mapRef } = useMapRefsContext();
+  const { mapRef, listenerRegistryRef } = useMapRefsContext();
   const { id: layerId, vectorSourceRef } = useVectorLayerContext();
 
   const predicate = useIsFeaturesFeature(layerId, featuresId, type);
@@ -103,10 +117,20 @@ export function useFeaturesPointermove<
       onHover(item, feature);
     };
 
-    map.on("pointermove", handlePointerMove);
-
-    return () => {
-      map.un("pointermove", handlePointerMove);
-    };
-  }, [featuresId, layerId, mapRef, onHover, predicate, vectorSourceRef]);
+    return registerMapListener(
+      listenerRegistryRef.current,
+      map as unknown as MapEventTarget,
+      `features:${layerId}:${featuresId}:pointermove`,
+      "pointermove",
+      handlePointerMove as (event: never) => void,
+    );
+  }, [
+    featuresId,
+    layerId,
+    listenerRegistryRef,
+    mapRef,
+    onHover,
+    predicate,
+    vectorSourceRef,
+  ]);
 }

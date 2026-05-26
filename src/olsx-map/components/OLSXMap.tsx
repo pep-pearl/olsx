@@ -32,6 +32,7 @@ function OLSXMapComp(
     viewRef,
     layerRegistryRef,
     sourceRegistryRef,
+    listenerRegistryRef,
     isMapReady,
     mapElementRef,
   } = useOLSXMap(defaultControl);
@@ -47,9 +48,17 @@ function OLSXMapComp(
       getView: () => viewRef.current,
       getLayerRegistry: () => layerRegistryRef.current,
       getSourceRegistry: () => sourceRegistryRef.current,
+      getListenerRegistry: () => listenerRegistryRef.current,
       isMapReady,
     }),
-    [mapRef, viewRef, layerRegistryRef, sourceRegistryRef, isMapReady],
+    [
+      mapRef,
+      viewRef,
+      layerRegistryRef,
+      sourceRegistryRef,
+      listenerRegistryRef,
+      isMapReady,
+    ],
   );
 
   const mapRefsContextValue = useMemo(
@@ -58,8 +67,9 @@ function OLSXMapComp(
       viewRef,
       layerRegistryRef,
       sourceRegistryRef,
+      listenerRegistryRef,
     }),
-    [mapRef, viewRef, layerRegistryRef, sourceRegistryRef],
+    [mapRef, viewRef, layerRegistryRef, sourceRegistryRef, listenerRegistryRef],
   );
 
   const mapReadyContextValue = useMemo(

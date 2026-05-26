@@ -5,16 +5,19 @@
  * @ai-depends VectorLayer, VectorSource, Feature/Features vector source components.
  * @ai-used-by src/layers/olsx-vector-layer/index.ts and consumers needing typed layer-specific data.
  * @ai-keywords createVectorLayer, defineOlsxVectorLayer, OLSXVectorLayerCompound, Feature, Features.
- * @ai-notes Preserve the compound component shape: Layer.Source, Layer.Feature, Layer.Features, and legacy Layer.FeatureSet.
+ * @ai-notes Preserve the compound component shape: Layer.Source, Layer.Feature, Layer.Features, and legacy Layer.Features.
  */
 
 import type { ComponentType } from "react";
-import { OLSXVectorLayer } from "../components/OLSXVectorLayer";
 import { OLSXFeature } from "../components/OLSXFeature";
 import { OLSXFeatures } from "../components/OLSXFeatures";
+import { OLSXVectorLayer } from "../components/OLSXVectorLayer";
 import { OLSXVectorSource } from "../components/OLSXVectorSource";
-import type { FeaturesProps, OLSXVectorLayerProps } from "../types";
-import type { OLSXFeatureProps } from "../types";
+import type {
+  FeaturesProps,
+  OLSXFeatureProps,
+  OLSXVectorLayerProps,
+} from "../types";
 
 export type OLSXVectorLayerCompound<
   TTypes extends readonly string[] = readonly string[],
@@ -24,7 +27,6 @@ export type OLSXVectorLayerCompound<
   Source: typeof OLSXVectorSource;
   Feature: ComponentType<OLSXFeatureProps<TTypes[number]>>;
   Features: ComponentType<FeaturesProps<TTypes[number], TData>>;
-  FeatureSet: ComponentType<FeaturesProps<TTypes[number], TData>>;
 };
 
 export function defineOlsxVectorLayer<
@@ -38,9 +40,6 @@ export function defineOlsxVectorLayer<
       Source: OLSXVectorSource,
       Feature: OLSXFeature as ComponentType<OLSXFeatureProps<TTypes[number]>>,
       Features: OLSXFeatures as ComponentType<
-        FeaturesProps<TTypes[number], TData>
-      >,
-      FeatureSet: OLSXFeatures as ComponentType<
         FeaturesProps<TTypes[number], TData>
       >,
     },

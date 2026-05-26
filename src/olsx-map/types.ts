@@ -2,6 +2,7 @@ import type { Collection, Map as OlMap, View } from "ol";
 import type { Control } from "ol/control";
 import type { Layer } from "ol/layer";
 import type VectorSource from "ol/source/Vector";
+import type { ListenerRegistry } from "../core/listeners/listenerRegistry";
 
 export type OLSXMapProps = {
   defaultControl?: Control[] | Collection<Control>;
@@ -14,6 +15,7 @@ export type OLSXMapRef = {
   getView: () => View | null;
   getLayerRegistry: () => Map<string, Layer>;
   getSourceRegistry: () => Map<string, VectorSource>;
+  getListenerRegistry: () => ListenerRegistry;
   isMapReady: boolean;
 };
 

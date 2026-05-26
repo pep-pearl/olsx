@@ -4,15 +4,15 @@
  * @ai-domain gis
  * @ai-depends useFeatures, useFeaturesEvent, FeaturesProps.
  * @ai-used-by OLSXVectorLayer.Features compound component.
- * @ai-keywords Features, FeatureSet, data, getGeometry, getId, onClick, onHover.
+ * @ai-keywords Features, data, getGeometry, getId, onClick, onHover.
  * @ai-notes Feature identity and event data are stored on OpenLayers features by the hooks.
  */
 
+import { useFeatures } from "../internal/useFeatures";
 import {
   useFeaturesPointermove,
   useFeaturesSingleclick,
 } from "../internal/useFeaturesEvent";
-import { useFeatures } from "../internal/useFeatures";
 import type { FeaturesProps } from "../types";
 
 export function OLSXFeatures<

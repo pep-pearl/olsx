@@ -18,6 +18,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import { useMapRefsContext } from "../../core/model/context";
+import { syncOverlayPosition } from "../internal/overlayPosition";
 import type { OLSXOverlayProps, OLSXOverlayRef } from "../types";
 
 function OLSXOverlayComp(
@@ -90,16 +91,7 @@ function OLSXOverlayComp(
 
     if (!overlay) return;
 
-    if (!isVisible || !coordinate) {
-      overlay.setPosition(undefined);
-      return;
-    }
-
-    overlay.setPosition(coordinate);
-
-    if (autoPan) {
-      overlay.panIntoView(autoPan === true ? undefined : autoPan);
-    }
+    syncOverlayPosition({ overlay, coordinate, visible: isVisible, autoPan });
   }, [coordinate, isVisible, autoPan]);
 
   useImperativeHandle(

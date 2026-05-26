@@ -7,6 +7,7 @@ import {
 } from "../../../core/model/context";
 import type { BaseLayerType } from "../../../core/types";
 import { createBaseSource } from "../../../core/utils/createBaseLayer";
+import { mountBaseLayer } from "../internal/baseLayerLifecycle";
 
 export function useBaseLayer(defaultType: BaseLayerType) {
   const { mapRef } = useMapRefsContext();
@@ -40,27 +41,7 @@ export function useBaseLayer(defaultType: BaseLayerType) {
       if (type === baseLayerType && cacheLayerRef.current.has(type)) return;
 
       const nextBaseLayer = getOrCreateBaseLayer(type);
-      const layers = map.getLayers();
-      const layerArray = layers.getArray();
-
-      const isSameType = baseLayerType === type;
-      const isAlreadyMounted = layerArray.includes(nextBaseLayer);
-
-      if (isSameType && isAlreadyMounted) return;
-
-      if (!isAlreadyMounted) {
-        layers.insertAt(0, nextBaseLayer);
-      }
-
-      const layersToRemove = layers
-        .getArray()
-        .filter(
-          (layer) => layer.get("role") === "base" && layer !== nextBaseLayer,
-        );
-
-      layersToRemove.forEach((layer) => {
-        map.removeLayer(layer);
-      });
+      mountBaseLayer(map, nextBaseLayer);
 
       setIsBaseLayerReady(true);
       setBaseLayerType(type);

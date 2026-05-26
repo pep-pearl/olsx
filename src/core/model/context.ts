@@ -13,6 +13,7 @@ import type { Layer } from "ol/layer";
 import type VectorSource from "ol/source/Vector";
 import type { Style } from "ol/style";
 import { createContext, type RefObject, useContext } from "react";
+import type { ListenerRegistry } from "../listeners/listenerRegistry";
 import type { BaseLayerType } from "../types";
 
 export type StyleCacheValue = Style | Style[];
@@ -23,6 +24,7 @@ type MapRefsContextType = {
   viewRef: RefObject<View | null>;
   layerRegistryRef: RefObject<Map<string, Layer>>;
   sourceRegistryRef: RefObject<Map<string, VectorSource>>;
+  listenerRegistryRef: RefObject<ListenerRegistry>;
 };
 
 type MapReadyContextType = {
