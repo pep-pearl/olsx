@@ -27,7 +27,7 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/layers/olsx-vector-layer/` contains the vector layer compound API. Public JSX components live in `components/`, implementation hooks/context live in `internal/`, the typed layer factory lives in `factory/`, and the per-source feature registry contract lives in `registry/`.
 - `src/olsx-overlay/` contains the React portal wrapper for OpenLayers overlays.
 - `src/presets/base-layer/` is the built-in replaceable base-map preset for street/satellite tile layers.
-- `src/controls/` contains default UI controls that consume map/base-layer contexts.
+- `src/controls/` contains default UI controls and headless control hooks. Default components live in `default/`; custom UI hooks live in `headless/`.
 - `playground/` is the Vite demo app used for local manual validation.
 
 ## Read First By Task
@@ -55,7 +55,8 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/presets/base-layer/components/BaseLayer.tsx`
 - `src/presets/base-layer/hooks/useBaseLayer.ts`
 - `src/core/utils/createBaseLayer.ts`
-- `src/controls/components/ToggleBaseLayerButton.tsx`
+- `src/controls/default/BaseLayerToggle.tsx`
+- `src/controls/headless/useBaseLayerControl.ts`
 
 ### Tile Layers
 
@@ -83,13 +84,15 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/olsx-overlay/types.ts`
 - `playground/App.tsx`
 
-### Default Controls
+### Controls
 
-- `src/controls/components/Controls.tsx`
-- `src/controls/components/ZoomButton.tsx`
-- `src/controls/components/ToggleBaseLayerButton.tsx`
-- `src/core/hooks/useZoom.ts`
-- `src/core/hooks/useToggleBaseLayer.ts`
+- `src/controls/default/Controls.tsx`
+- `src/controls/default/ZoomControl.tsx`
+- `src/controls/default/BaseLayerToggle.tsx`
+- `src/controls/default/icons.tsx`
+- `src/controls/default/styles.ts`
+- `src/controls/headless/useZoomControl.ts`
+- `src/controls/headless/useBaseLayerControl.ts`
 
 ### Demo / Usage Examples
 
@@ -103,6 +106,7 @@ Use it to decide which files to read before opening large parts of the repositor
 - `useMapRefsContext` is the preferred escape hatch for direct OpenLayers object access; `useMapContext` remains as a compatibility hook that combines refs and readiness.
 - `useMountLayer` is the shared lifecycle helper for OpenLayers layer components; check it before adding another layer wrapper.
 - `OLSXTileLayer` is the generic public tile-layer wrapper. `BaseLayer` remains the opinionated street/satellite preset.
+- Controls are split between `src/controls/default/` ready-to-use UI and `src/controls/headless/` hooks for custom UI.
 - `OLSXVectorLayer` is the default compound vector API. `createVectorLayer` returns a typed compound component for user-defined feature types/data.
 - `OLSXOverlay` mounts React children into an OpenLayers `Overlay` via a React portal; use it for popups, labels, callouts, and map-anchored UI.
 - OpenLayers object lifecycle is intentionally kept in React components/hooks rather than hidden behind a closed abstraction.

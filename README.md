@@ -54,8 +54,8 @@ export function BasicMap() {
       <BaseLayer />
 
       <Controls>
-        <Controls.ToggleBaseLayerButton />
-        <Controls.ZoomButton />
+        <Controls.BaseLayerToggle />
+        <Controls.Zoom />
       </Controls>
     </OLSXMap>
   );
@@ -63,6 +63,39 @@ export function BasicMap() {
 ```
 
 `OLSXMap.View`를 생략하면 `Map`은 생성되지만 view는 자동으로 설정되지 않습니다. 기본값을 쓰려면 `<OLSXMap.View />`만 렌더링하면 됩니다.
+
+## Controls
+
+Controls는 기본 UI와 headless hook으로 나뉩니다.
+
+- `Controls`, `Controls.Zoom`, `Controls.BaseLayerToggle`: OpenLayers를 몰라도 바로 쓸 수 있는 기본 UI입니다.
+- `useZoomControl()`, `useBaseLayerControl()`: 커스텀 toolbar를 만들 때 쓰는 상태/action hook입니다.
+- `Controls.ZoomButton`, `Controls.ToggleBaseLayerButton`, `ZoomButton`, `ToggleBaseLayerButton`은 기존 사용자를 위한 호환 alias입니다.
+
+```tsx
+import { useBaseLayerControl, useZoomControl } from "olsx";
+
+export function CustomToolbar() {
+  const zoom = useZoomControl();
+  const baseLayer = useBaseLayerControl();
+
+  if (!zoom.isReady || !baseLayer.isReady) return null;
+
+  return (
+    <div>
+      <button type="button" onClick={() => zoom.zoomIn()}>
+        +
+      </button>
+      <button type="button" onClick={() => zoom.zoomOut()}>
+        -
+      </button>
+      <button type="button" onClick={baseLayer.toggle}>
+        {baseLayer.nextType}
+      </button>
+    </div>
+  );
+}
+```
 
 ## View 제어
 
@@ -356,7 +389,9 @@ src/
   olsx-overlay/                    coordinate-anchored React overlay wrapper
   presets/
     base-layer/                    built-in base-map preset
-  controls/                        default React controls and control hooks
+  controls/
+    default/                       ready-to-use controls for non-OpenLayers users
+    headless/                      control state/action hooks for custom UI
 playground/                        local Vite demo
 docs/rules/                        AI agent navigation rules
 AI_INDEX.md                        AI navigation map
@@ -375,8 +410,12 @@ AI_INDEX.md                        AI navigation map
 - `OLSXOverlayRef`
 - `BaseLayer`
 - `Controls`
-- `Controls.ZoomButton`
-- `Controls.ToggleBaseLayerButton`
+- `Controls.Zoom`
+- `Controls.BaseLayerToggle`
+- `ZoomControl`
+- `BaseLayerToggle`
+- `useZoomControl`
+- `useBaseLayerControl`
 - `OLSXVectorLayer`
 - `createVectorLayer`
 - `defineOlsxVectorLayer`

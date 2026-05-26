@@ -154,8 +154,8 @@ function App() {
       </OLSXOverlay>
 
       <Controls>
-        <Controls.ToggleBaseLayerButton />
-        <Controls.ZoomButton />
+        <Controls.BaseLayerToggle />
+        <Controls.Zoom />
       </Controls>
       <OLSXVectorLayer id="another-layer" types={types} style={markerStyle}>
         <OLSXVectorLayer.Source />
