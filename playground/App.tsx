@@ -78,7 +78,7 @@ function App() {
   }, []);
 
   const markerStyle = useCallback((feature: FeatureLike, type?: string) => {
-    const data = feature.get("_data") as SeoulPlace | undefined;
+    const data = feature.get("_properties") as SeoulPlace | undefined;
 
     return new Style({
       image: new CircleStyle({
@@ -120,12 +120,15 @@ function App() {
 
   return (
     <OLSXMap style={{ width: "100dvw", height: "100dvh" }}>
+      <OLSXMap.View />
+
       <BaseLayer />
 
       {/* <SeoulVectorLayer id="test-layer" types={types} style={markerStyle}>
         <SeoulVectorLayer.Source />
 
-        <SeoulVectorLayer.FeatureSet
+        <SeoulVectorLayer.Features
+          id="test-places"
           type="type2"
           data={seoulDummyData}
           getId={getId}
@@ -156,7 +159,8 @@ function App() {
       </Controls>
       <OLSXVectorLayer id="another-layer" types={types} style={markerStyle}>
         <OLSXVectorLayer.Source />
-        <OLSXVectorLayer.FeatureSet
+        <OLSXVectorLayer.Features
+          id="seoul-places"
           type="type1"
           data={seoulDummyData}
           getId={getId}

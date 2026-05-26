@@ -18,22 +18,13 @@ import {
   BaseLayerContext,
   MapReadyContext,
   MapRefsContext,
-} from "../../../core/model/context";
-import type { BaseLayerType } from "../../../core/types";
-import { useOLSXMap } from "../hooks/useOLSXMap";
+} from "../../core/model/context";
+import type { BaseLayerType } from "../../core/types";
+import { useOLSXMap } from "../internal/useOLSXMap";
 import type { OLSXMapProps, OLSXMapRef } from "../types";
 
-const DEFAULT_CENTER: [number, number] = [126.978, 37.5665];
-const DEFAULT_ZOOM = 16;
-
 function OLSXMapComp(
-  {
-    style,
-    defaultCenter = DEFAULT_CENTER,
-    defaultZoom = DEFAULT_ZOOM,
-    children,
-    defaultControl = [],
-  }: OLSXMapProps,
+  { style, children, defaultControl = [] }: OLSXMapProps,
   ref: React.ForwardedRef<OLSXMapRef>,
 ) {
   const {
@@ -43,7 +34,7 @@ function OLSXMapComp(
     sourceRegistryRef,
     isMapReady,
     mapElementRef,
-  } = useOLSXMap(defaultCenter, defaultZoom, defaultControl);
+  } = useOLSXMap(defaultControl);
 
   const [baseLayerType, setBaseLayerType] = useState<BaseLayerType | null>(
     null,
@@ -58,7 +49,7 @@ function OLSXMapComp(
       getSourceRegistry: () => sourceRegistryRef.current,
       isMapReady,
     }),
-    [mapRef, layerRegistryRef, sourceRegistryRef, isMapReady, viewRef],
+    [mapRef, viewRef, layerRegistryRef, sourceRegistryRef, isMapReady],
   );
 
   const mapRefsContextValue = useMemo(
@@ -68,7 +59,7 @@ function OLSXMapComp(
       layerRegistryRef,
       sourceRegistryRef,
     }),
-    [mapRef, layerRegistryRef, sourceRegistryRef, viewRef],
+    [mapRef, viewRef, layerRegistryRef, sourceRegistryRef],
   );
 
   const mapReadyContextValue = useMemo(

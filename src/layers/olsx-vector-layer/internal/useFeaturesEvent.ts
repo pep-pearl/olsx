@@ -1,40 +1,39 @@
 import type { MapBrowserEvent } from "ol";
 import type { FeatureLike } from "ol/Feature";
 import { useCallback, useEffect, useRef } from "react";
-import { FEATURE_DATA_KEY } from "../../../core/constants";
+import { FEATURE_PROPERTIES_KEY } from "../../../core/constants";
 import { useMapRefsContext } from "../../../core/model/context";
 import { findFeatureAtEvent } from "../../../core/utils/olUtils";
-import { isFeatureSetFeature } from "../../../core/utils/olsxUtils";
-import { useVectorLayerContext } from "../model/vectorLayerContext";
+import { isFeaturesFeature } from "../../../core/utils/olsxUtils";
+import { useVectorLayerContext } from "./vectorLayerContext";
 
-function useIsFeatureSetFeature(id: string, type: string) {
+function useIsFeaturesFeature(layerId: string, featuresId: string, type: string) {
   return useCallback(
-    (feat: FeatureLike) => isFeatureSetFeature(feat, id, type),
-    [id, type],
+    (feat: FeatureLike) => isFeaturesFeature(feat, layerId, featuresId, type),
+    [featuresId, layerId, type],
   );
 }
 
-export function useFeatureSetFeatureSingleclick<
+export function useFeaturesSingleclick<
   TType extends string,
   TData extends object,
 >(
+  featuresId: string,
   type: TType,
   onClick: ((item: TData, feature: FeatureLike) => void) | undefined,
 ) {
-  const { mapRef, sourceRegistryRef } = useMapRefsContext();
-  const { id } = useVectorLayerContext();
+  const { mapRef } = useMapRefsContext();
+  const { id: layerId, vectorSourceRef } = useVectorLayerContext();
 
-  const predicate = useIsFeatureSetFeature(id, type);
+  const predicate = useIsFeaturesFeature(layerId, featuresId, type);
 
   useEffect(() => {
     const map = mapRef?.current;
-    if (!map || !sourceRegistryRef || !onClick) return;
+    if (!map || !onClick) return;
 
-    const sourceRegistry = sourceRegistryRef.current;
-
-    if (!sourceRegistry.has(id)) {
+    if (!vectorSourceRef.current) {
       console.warn(
-        `Layer with id "${id}" does not have a source in source registry. Click handler will not be set.`,
+        `Layer with id "${layerId}" does not have a vector source. Click handler for features "${featuresId}" will not be set.`,
       );
       return;
     }
@@ -43,7 +42,7 @@ export function useFeatureSetFeatureSingleclick<
       const feature = findFeatureAtEvent(map, event, predicate);
       if (!feature) return;
 
-      const item = feature.get(FEATURE_DATA_KEY) as TData | undefined;
+      const item = feature.get(FEATURE_PROPERTIES_KEY) as TData | undefined;
       if (!item) return;
 
       onClick(item, feature);
@@ -54,31 +53,30 @@ export function useFeatureSetFeatureSingleclick<
     return () => {
       map.un("singleclick", handleClick);
     };
-  }, [mapRef, sourceRegistryRef, id, type, onClick, predicate]);
+  }, [featuresId, layerId, mapRef, onClick, predicate, vectorSourceRef]);
 }
-export function useFeatureSetFeaturePointermove<
+export function useFeaturesPointermove<
   TType extends string,
   TData extends object,
 >(
+  featuresId: string,
   type: TType,
   onHover: ((item: TData, feature: FeatureLike) => void) | undefined,
 ) {
-  const { mapRef, sourceRegistryRef } = useMapRefsContext();
-  const { id } = useVectorLayerContext();
+  const { mapRef } = useMapRefsContext();
+  const { id: layerId, vectorSourceRef } = useVectorLayerContext();
 
-  const predicate = useIsFeatureSetFeature(id, type);
+  const predicate = useIsFeaturesFeature(layerId, featuresId, type);
 
   const lastHoveredFeatureRef = useRef<FeatureLike | null>(null);
 
   useEffect(() => {
     const map = mapRef?.current;
-    if (!map || !sourceRegistryRef || !onHover) return;
+    if (!map || !onHover) return;
 
-    const sourceRegistry = sourceRegistryRef.current;
-
-    if (!sourceRegistry.has(id)) {
+    if (!vectorSourceRef.current) {
       console.warn(
-        `Layer with id "${id}" does not have a source in source registry. Hover handler will not be set.`,
+        `Layer with id "${layerId}" does not have a vector source. Hover handler for features "${featuresId}" will not be set.`,
       );
       return;
     }
@@ -99,7 +97,7 @@ export function useFeatureSetFeaturePointermove<
 
       lastHoveredFeatureRef.current = feature;
 
-      const item = feature.get(FEATURE_DATA_KEY) as TData | undefined;
+      const item = feature.get(FEATURE_PROPERTIES_KEY) as TData | undefined;
       if (!item) return;
 
       onHover(item, feature);
@@ -110,5 +108,5 @@ export function useFeatureSetFeaturePointermove<
     return () => {
       map.un("pointermove", handlePointerMove);
     };
-  }, [mapRef, sourceRegistryRef, id, type, onHover, predicate]);
+  }, [featuresId, layerId, mapRef, onHover, predicate, vectorSourceRef]);
 }

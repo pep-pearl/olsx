@@ -1,16 +1,18 @@
 /**
- * @ai-purpose React wrapper for an OpenLayers vector layer and its typed feature-set children.
+ * @ai-purpose React wrapper for an OpenLayers vector layer and its typed vector-source children.
  * @ai-entry true
  * @ai-domain gis
  * @ai-depends OLSXMap registry context, VectorLayerContext, vector style cache utilities.
  * @ai-used-by OLSXVectorLayer compound API and createVectorLayer typed factory.
  * @ai-keywords OLSXVectorLayer, VectorLayerProps, VectorLayerRef, style, cacheStyle, types.
- * @ai-notes Keep OpenLayers layer lifecycle separate from FeatureSet data/source lifecycle.
+ * @ai-notes Keep OpenLayers layer lifecycle separate from Feature/Features data/source lifecycle.
  */
 
-import { forwardRef, useImperativeHandle } from "react";
-import { useOLSXVectorLayer } from "../hooks/useOLSXVectorLayer";
-import { VectorLayerContext } from "../model/vectorLayerContext";
+import OlVectorSource from "ol/source/Vector";
+import { forwardRef, useImperativeHandle, useMemo, useRef } from "react";
+import { useOLSXVectorLayer } from "../internal/useOLSXVectorLayer";
+import { VectorLayerContext } from "../internal/vectorLayerContext";
+import { createFeaturesRegistry } from "../registry/featuresRegistry";
 import type { OLSXVectorLayerProps, OLSXVectorLayerRef } from "../types";
 
 function OLSXVectorLayerComp<
@@ -30,6 +32,8 @@ function OLSXVectorLayerComp<
     style,
     cacheStyle,
   });
+  const vectorSourceRef = useRef<OlVectorSource | null>(null);
+  const featuresRegistryRef = useRef(createFeaturesRegistry());
 
   useImperativeHandle(
     ref,
@@ -40,8 +44,18 @@ function OLSXVectorLayerComp<
     [isVectorLayerReady, vectorLayerRef],
   );
 
+  const vectorLayerContextValue = useMemo(
+    () => ({
+      id,
+      types: types ?? [],
+      vectorSourceRef,
+      featuresRegistryRef,
+    }),
+    [id, types],
+  );
+
   return (
-    <VectorLayerContext.Provider value={{ id, types: types ?? [] }}>
+    <VectorLayerContext.Provider value={vectorLayerContextValue}>
       {isVectorLayerReady && children}
     </VectorLayerContext.Provider>
   );

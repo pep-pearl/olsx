@@ -3,7 +3,7 @@ import type { Style } from "ol/style";
 import { useEffect, useRef } from "react";
 import { useMountLayer } from "../../../core/hooks/useMountLayer";
 import type { OLSXVectorLayerProps } from "../types";
-import { getFeatureStyleCacheKey } from "../utils/styleCache";
+import { getFeatureStyleCacheKey } from "./styleCache";
 
 type VectorStyleResult = Style | Style[] | void;
 

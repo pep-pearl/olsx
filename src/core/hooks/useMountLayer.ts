@@ -15,7 +15,6 @@ import { useMapRefsContext } from "../model/context";
 export function useMountLayer<T extends Layer>(
   id: string,
   createLayer: () => T,
-  deps: React.DependencyList = [],
 ) {
   const layerRef = useRef<T | null>(null);
   const createLayerRef = useRef(createLayer);
@@ -50,7 +49,7 @@ export function useMountLayer<T extends Layer>(
       layerRef.current = null;
       setIsLayerReady(false);
     };
-  }, [id, mapRef, layerRegistryRef, ...deps]);
+  }, [id, mapRef, layerRegistryRef]);
 
   return { isLayerReady, layerRef };
 }

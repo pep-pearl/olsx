@@ -1,8 +1,9 @@
 import type { FeatureLike } from "ol/Feature";
 import {
-  FEATURE_DATA_KEY,
-  FEATURE_SET_LAYER_ID_KEY,
-  FEATURE_SET_TYPE_KEY,
+  FEATURE_PROPERTIES_KEY,
+  FEATURE_GROUP_ID_KEY,
+  FEATURE_LAYER_ID_KEY,
+  FEATURE_TYPE_KEY,
 } from "../constants";
 
 export type GettableFeature = FeatureLike & {
@@ -15,6 +16,22 @@ export function isGettableFeature(
   return "get" in feature;
 }
 
+export function isFeaturesFeature(
+  feature: FeatureLike,
+  layerId: string,
+  featuresId: string,
+  type: string,
+): feature is GettableFeature {
+  if (!isGettableFeature(feature)) return false;
+
+  return (
+    feature.get(FEATURE_LAYER_ID_KEY) === layerId &&
+    feature.get(FEATURE_GROUP_ID_KEY) === featuresId &&
+    feature.get(FEATURE_TYPE_KEY) === type &&
+    Boolean(feature.get(FEATURE_PROPERTIES_KEY))
+  );
+}
+
 export function isFeatureSetFeature(
   feature: FeatureLike,
   layerId: string,
@@ -23,8 +40,8 @@ export function isFeatureSetFeature(
   if (!isGettableFeature(feature)) return false;
 
   return (
-    feature.get(FEATURE_SET_LAYER_ID_KEY) === layerId &&
-    feature.get(FEATURE_SET_TYPE_KEY) === type &&
-    Boolean(feature.get(FEATURE_DATA_KEY))
+    feature.get(FEATURE_LAYER_ID_KEY) === layerId &&
+    feature.get(FEATURE_TYPE_KEY) === type &&
+    Boolean(feature.get(FEATURE_PROPERTIES_KEY))
   );
 }

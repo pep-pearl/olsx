@@ -38,7 +38,7 @@ export function useMapRefsContext() {
   const context = useContext(MapRefsContext);
 
   if (!context) {
-    throw new Error("useMapRefsContext must be used within OLXMap");
+    throw new Error("useMapRefsContext must be used within OLSXMap");
   }
 
   return context;
@@ -48,7 +48,7 @@ export function useMapReadyContext() {
   const context = useContext(MapReadyContext);
 
   if (!context) {
-    throw new Error("useMapReadyContext must be used within OLXMap");
+    throw new Error("useMapReadyContext must be used within OLSXMap");
   }
 
   return context;

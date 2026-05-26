@@ -10,9 +10,9 @@ Use it to decide which files to read before opening large parts of the repositor
 
 1. If exact files are provided, start from those files.
 2. For public API questions, start at `src/index.ts`, then follow the exported module.
-3. For map lifecycle or registry questions, start at `src/layers/olsx-map/components/OLSXMap.tsx`, `src/layers/olsx-map/hooks/useOLSXMap.ts`, and `src/core/model/context.ts`.
+3. For map lifecycle or registry questions, start at `src/olsx-map/components/OLSXMap.tsx`, `src/olsx-map/components/OLSXView.tsx`, `src/olsx-map/internal/useOLSXMap.ts`, and `src/core/model/context.ts`.
 4. For reusable layer lifecycle questions, start at `src/core/hooks/useMountLayer.ts`.
-5. For vector feature/data/event questions, start at `src/layers/olsx-vector-layer/components/OLSXVectorLayer.tsx`, then `components/FeatureSet.tsx` and the hooks under `src/layers/olsx-vector-layer/hooks/`.
+5. For vector feature/data/event questions, start at the public components under `src/layers/olsx-vector-layer/components/`, then read implementation hooks under `src/layers/olsx-vector-layer/internal/` only as needed.
 6. Check file-level `@ai-*` comments before opening full files when available.
 7. Do not scan all of `src/` by default unless the task explicitly calls for structure-wide maintenance.
 
@@ -22,9 +22,9 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/core/model/` contains shared React contexts for map refs, map readiness, and base-layer state.
 - `src/core/hooks/` contains shared React/OpenLayers lifecycle hooks such as `useMountLayer`.
 - `src/core/utils/` contains OpenLayers helpers and source factories.
-- `src/layers/olsx-map/` creates the OpenLayers `Map`, owns shared registries, and provides React contexts.
+- `src/olsx-map/` creates the OpenLayers `Map` and `View`, owns shared registries, and provides React contexts. Public map components live in `components/`; map implementation hooks live in `internal/`.
 - `src/layers/olsx-tile-layer/` provides the generic tile-layer component built on the shared layer-mount hook.
-- `src/layers/olsx-vector-layer/` contains the vector layer compound API, source mounting, feature-set data bridge, feature events, and vector-specific types.
+- `src/layers/olsx-vector-layer/` contains the vector layer compound API. Public JSX components live in `components/`, implementation hooks/context live in `internal/`, the typed layer factory lives in `factory/`, and the per-source feature registry contract lives in `registry/`.
 - `src/olsx-overlay/` contains the React portal wrapper for OpenLayers overlays.
 - `src/presets/base-layer/` is the built-in replaceable base-map preset for street/satellite tile layers.
 - `src/controls/` contains default UI controls that consume map/base-layer contexts.
@@ -35,19 +35,20 @@ Use it to decide which files to read before opening large parts of the repositor
 ### Public API / Exports
 
 - `src/index.ts`
-- `src/layers/olsx-map/index.ts`
+- `src/olsx-map/index.ts`
 - `src/layers/olsx-tile-layer/index.ts`
 - `src/layers/olsx-vector-layer/index.ts`
-- `src/layers/olsx-vector-layer/utils/createVectorLayer.ts`
+- `src/layers/olsx-vector-layer/factory/createVectorLayer.ts`
 - `src/olsx-overlay/index.ts`
 
 ### Map Provider / Lifecycle
 
-- `src/layers/olsx-map/components/OLSXMap.tsx`
-- `src/layers/olsx-map/hooks/useOLSXMap.ts`
+- `src/olsx-map/components/OLSXMap.tsx`
+- `src/olsx-map/components/OLSXView.tsx`
+- `src/olsx-map/internal/useOLSXMap.ts`
 - `src/core/model/context.ts`
 - `src/core/hooks/useMountLayer.ts`
-- `src/layers/olsx-map/types.ts`
+- `src/olsx-map/types.ts`
 
 ### Base Layers
 
@@ -65,11 +66,15 @@ Use it to decide which files to read before opening large parts of the repositor
 ### Vector Layers / Features / GIS Events
 
 - `src/layers/olsx-vector-layer/components/OLSXVectorLayer.tsx`
-- `src/layers/olsx-vector-layer/components/VectorSource.tsx`
-- `src/layers/olsx-vector-layer/components/FeatureSet.tsx`
-- `src/layers/olsx-vector-layer/hooks/useOLSXVectorLayer.ts`
-- `src/layers/olsx-vector-layer/hooks/useFeatureSetFeatures.ts`
-- `src/layers/olsx-vector-layer/hooks/useFeatureSetFeatureEvent.ts`
+- `src/layers/olsx-vector-layer/components/OLSXVectorSource.tsx`
+- `src/layers/olsx-vector-layer/components/OLSXFeature.tsx`
+- `src/layers/olsx-vector-layer/components/OLSXFeatures.tsx`
+- `src/layers/olsx-vector-layer/internal/useOLSXVectorLayer.ts`
+- `src/layers/olsx-vector-layer/internal/useFeatures.ts`
+- `src/layers/olsx-vector-layer/internal/useFeaturesEvent.ts`
+- `src/layers/olsx-vector-layer/internal/vectorLayerContext.ts`
+- `src/layers/olsx-vector-layer/registry/featuresRegistry.ts`
+- `src/layers/olsx-vector-layer/factory/createVectorLayer.ts`
 - `src/layers/olsx-vector-layer/types.ts`
 
 ### Overlays / Popups
