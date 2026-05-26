@@ -20,8 +20,8 @@ export type OLSXMapRef = {
 };
 
 export type OLSXViewProps = {
-  defaultCenter: [number, number];
-  defaultZoom: number;
+  defaultCenter?: [number, number];
+  defaultZoom?: number;
 };
 
 export type OLSXViewRef = {

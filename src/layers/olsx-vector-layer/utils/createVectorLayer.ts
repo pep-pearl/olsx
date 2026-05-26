@@ -10,11 +10,10 @@
 
 import type { ComponentType } from "react";
 import { OLSXVectorLayer } from "../components/OLSXVectorLayer";
-import { OLSXVectorSource } from "../olsx-vector-source";
-import { OLSXFeature } from "../olsx-vector-source/components/Feature";
-import { OLSXFeatures } from "../olsx-vector-source/components/Features";
-import type { OLSXFeatureProps } from "../olsx-vector-source/types";
-import type { OLSXFeaturesProps, OLSXVectorLayerProps } from "../types";
+import { OLSXVectorSource } from "../components/OLSXVectorSource";
+import { OLSXFeature } from "../components/OLSXFeature";
+import { OLSXFeatures } from "../components/OLSXFeatures";
+import type { OLSXFeatureProps, OLSXFeaturesProps, OLSXVectorLayerProps } from "../types";
 
 export type OLSXVectorLayerCompound<
   TTypes extends readonly string[] = readonly string[],

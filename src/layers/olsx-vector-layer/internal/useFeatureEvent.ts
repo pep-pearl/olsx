@@ -11,9 +11,7 @@ import { Feature, MapBrowserEvent } from "ol";
 import type { FeatureLike } from "ol/Feature";
 import { useCallback, useEffect, useRef } from "react";
 import {
-  FEATURE_LAYER_ID_KEY,
   FEATURE_PROPERTIES_KEY,
-  FEATURE_TYPE_KEY,
 } from "../../../core/constants";
 import {
   registerMapListener,
@@ -24,9 +22,9 @@ import { isFeature } from "../../../core/utils/olsxUtils";
 import { findFeatureAtEvent } from "../../../core/utils/olUtils";
 import { useVectorLayerContext } from "../internal/vectorLayerContext";
 
-function useIsFeature(layerId: string, featureId: string, type: string) {
+function useIsFeature(layerId: string, featureId: string, type: string | undefined) {
   return useCallback(
-    (feat: FeatureLike) => isFeature(feat, layerId, featureId, type),
+    (feat: FeatureLike) => isFeature(feat, layerId, featureId, type ?? ""),
     [featureId, layerId, type],
   );
 }
@@ -36,7 +34,7 @@ export function useFeatureSingleclick<
   TData extends object,
 >(
   featureId: string,
-  type: TType,
+  type: TType | undefined,
   onClick: ((item: TData, feature: FeatureLike) => void) | undefined,
 ) {
   const { mapRef, listenerRegistryRef } = useMapRefsContext();
@@ -44,9 +42,7 @@ export function useFeatureSingleclick<
 
   const predicate = useCallback(
     (feature: FeatureLike): feature is Feature =>
-      feature.getId() === featureId &&
-      feature[FEATURE_LAYER_ID_KEY] === layerId &&
-      feature[FEATURE_TYPE_KEY] === type,
+      isFeature(feature, layerId, featureId, type ?? ""),
     [featureId, layerId, type],
   );
 
@@ -94,7 +90,7 @@ export function useFeaturePointermove<
   TData extends object,
 >(
   featureId: string,
-  type: TType,
+  type: TType | undefined,
   onHover: ((item: TData, feature: FeatureLike) => void) | undefined,
 ) {
   const { mapRef, listenerRegistryRef } = useMapRefsContext();

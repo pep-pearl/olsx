@@ -23,8 +23,10 @@ import type { BaseLayerType } from "../../core/types";
 import { useOLSXMap } from "../internal/useOLSXMap";
 import type { OLSXMapProps, OLSXMapRef } from "../types";
 
+const EMPTY_CONTROLS: any[] = [];
+
 function OLSXMapComp(
-  { style, children, defaultControl = [] }: OLSXMapProps,
+  { style, children, defaultControl = EMPTY_CONTROLS }: OLSXMapProps,
   ref: React.ForwardedRef<OLSXMapRef>,
 ) {
   const {

@@ -20,13 +20,13 @@ import { useVectorLayerContext } from "../internal/vectorLayerContext";
 
 export function useFeature({
   featureId,
-  type,
+  type = "",
   geometry,
   data,
 }: {
   featureId: string;
-  type: string;
-  geometry: Geometry;
+  type?: string;
+  geometry?: Geometry;
   data: object;
 }) {
   const {
@@ -38,7 +38,7 @@ export function useFeature({
 
   useEffect(() => {
     const vectorSource = vectorSourceRef.current;
-    if (!vectorSource) return;
+    if (!vectorSource || !geometry) return;
     const featuresRegistry = featuresRegistryRef.current;
 
     const feature = new Feature({
