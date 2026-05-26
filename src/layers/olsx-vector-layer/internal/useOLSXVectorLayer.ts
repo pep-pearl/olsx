@@ -1,7 +1,17 @@
+/**
+ * @ai-purpose React hook managing OpenLayers VectorLayer lifecycle and style resolution with caching.
+ * @ai-entry false
+ * @ai-domain gis
+ * @ai-depends useMountLayer, mapRefsContext, getFeatureStyleCacheKey
+ * @ai-used-by OLSXVectorLayer component
+ * @ai-keywords useOLSXVectorLayer, VectorLayer, styleCache, setStyle
+ */
+
 import VectorLayer from "ol/layer/Vector";
 import type { Style } from "ol/style";
 import { useEffect, useRef } from "react";
 import { useMountLayer } from "../../../core/hooks/useMountLayer";
+import { useMapRefsContext } from "../../../core/model/context";
 import type { OLSXVectorLayerProps } from "../types";
 import { getFeatureStyleCacheKey } from "./styleCache";
 
@@ -12,6 +22,7 @@ export function useOLSXVectorLayer<TTypes extends readonly string[]>({
   style,
   cacheStyle,
 }: OLSXVectorLayerProps<TTypes>) {
+  const { listenerRegistryRef } = useMapRefsContext();
   const styleCacheRef = useRef<Map<string, VectorStyleResult>>(new Map());
 
   const { isLayerReady: isVectorLayerReady, layerRef: vectorLayerRef } =

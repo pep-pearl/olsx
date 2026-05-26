@@ -1,3 +1,12 @@
+/**
+ * @ai-purpose Manages diffing and upserting data changes to OpenLayers features without full recreations.
+ * @ai-entry false
+ * @ai-domain gis
+ * @ai-depends Feature, olsx constants
+ * @ai-used-by useFeatures hook
+ * @ai-keywords diff, upsertFeatures, removeFeatures, vectorSource, identity
+ */
+
 import Feature from "ol/Feature";
 import type { Geometry } from "ol/geom";
 import {
@@ -15,7 +24,10 @@ type VectorSourceLike = {
 
 export type FeatureDiffState = Map<string, Feature>;
 
-export type UpsertFeaturesOptions<TType extends string, TData extends object> = {
+export type UpsertFeaturesOptions<
+  TType extends string,
+  TData extends object,
+> = {
   data: TData[];
   getGeometry: (item: TData) => Geometry;
   getId: (item: TData) => string;

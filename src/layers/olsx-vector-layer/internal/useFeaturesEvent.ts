@@ -10,14 +10,22 @@
 import type { MapBrowserEvent } from "ol";
 import type { FeatureLike } from "ol/Feature";
 import { useCallback, useEffect, useRef } from "react";
-import { FEATURE_PROPERTIES_KEY } from "../../../core/constants";
+import {
+  EVENT_TYPE_POINTERMOVE,
+  EVENT_TYPE_SINGLECLICK,
+  FEATURE_PROPERTIES_KEY,
+} from "../../../core/constants";
 import {
   registerMapListener,
   type MapEventTarget,
 } from "../../../core/listeners/listenerRegistry";
 import { useMapRefsContext } from "../../../core/model/context";
 import { findFeatureAtEvent } from "../../../core/utils/olUtils";
-import { isFeatureInFeatures } from "../../../core/utils/olsxUtils";
+import {
+  buildListenerKey,
+  getListenerKey,
+  isFeatureInFeatures,
+} from "../../../core/utils/olsxUtils";
 import { useVectorLayerContext } from "./vectorLayerContext";
 
 function useIsFeaturesFeature(
@@ -68,7 +76,7 @@ export function useFeaturesSingleclick<
     return registerMapListener(
       listenerRegistryRef.current,
       map as unknown as MapEventTarget,
-      `features:${layerId}:${featuresId}:singleclick`,
+      buildListenerKey(layerId, featuresId, EVENT_TYPE_SINGLECLICK),
       "singleclick",
       handleClick as (event: never) => void,
     );
@@ -100,7 +108,7 @@ export function useFeaturesPointermove<
 
   useEffect(() => {
     const map = mapRef?.current;
-    if (!map || !onHover) return;
+    if (!map) return;
 
     if (!vectorSourceRef.current) {
       console.warn(
@@ -113,28 +121,44 @@ export function useFeaturesPointermove<
       if (event.dragging) return;
 
       const feature = findFeatureAtEvent(map, event, predicate);
+      const targetElement = map.getTargetElement();
 
+      // feature 밖으로 나갈 때
       if (!feature || !("get" in feature)) {
         lastHoveredFeatureRef.current = null;
+        targetElement.style.cursor = ""; // cursor reset
         return;
       }
 
-      if (lastHoveredFeatureRef.current === feature) {
-        return;
+      // hover
+      if (onHover) {
+        if (lastHoveredFeatureRef.current !== feature) {
+          lastHoveredFeatureRef.current = feature;
+
+          const item = feature.get(FEATURE_PROPERTIES_KEY) as TData | undefined;
+          if (item) {
+            onHover(item, feature);
+          }
+        }
       }
 
-      lastHoveredFeatureRef.current = feature;
+      // singleclick: cursor pointer
+      const hasSingleclick = listenerRegistryRef.current.has(
+        getListenerKey(feature, EVENT_TYPE_SINGLECLICK),
+      );
 
-      const item = feature.get(FEATURE_PROPERTIES_KEY) as TData | undefined;
-      if (!item) return;
-
-      onHover(item, feature);
+      if (hasSingleclick) {
+        event.preventDefault();
+        targetElement.style.cursor = "pointer";
+      } else {
+        targetElement.style.cursor = "";
+      }
     };
 
     return registerMapListener(
       listenerRegistryRef.current,
       map as unknown as MapEventTarget,
-      `features:${layerId}:${featuresId}:pointermove`,
+      buildListenerKey(layerId, featuresId, EVENT_TYPE_POINTERMOVE),
       "pointermove",
       handlePointerMove as (event: never) => void,
     );

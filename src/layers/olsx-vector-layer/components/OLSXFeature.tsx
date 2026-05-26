@@ -22,8 +22,8 @@ export function OLSXFeatureComp<
 ) {
   const { featureRef } = useFeature({ featureId, type, geometry, data });
 
-  useFeatureSingleclick<TType, TData>(featureId, type, onClick);
-  useFeaturePointermove<TType, TData>(featureId, type, onHover);
+  useFeatureSingleclick<TData>(featureId, onClick);
+  useFeaturePointermove<TData>(featureId, onHover);
 
   useImperativeHandle(
     ref,

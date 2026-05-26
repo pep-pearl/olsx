@@ -7,3 +7,6 @@ export const FEATURE_TYPE_KEY = "__featureType";
 
 export const FEATURE_SET_LAYER_ID_KEY = FEATURE_LAYER_ID_KEY;
 export const FEATURE_SET_TYPE_KEY = FEATURE_TYPE_KEY;
+
+export const EVENT_TYPE_SINGLECLICK = "singleclick";
+export const EVENT_TYPE_POINTERMOVE = "pointermove";
