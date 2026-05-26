@@ -58,7 +58,7 @@ export function BasicMap() {
 - `useZoomControl()`, `useBaseLayerControl()`: 외부 커스텀 UI를 위한 headless control hook입니다.
 - `OLSXTileLayer`: 직접 만든 OpenLayers tile source를 붙이는 generic tile layer wrapper입니다.
 - `OLSXOverlay`: React children을 OpenLayers `Overlay`에 portal로 렌더링합니다.
-- `OLSXVectorLayer`: vector layer, source, single feature, data-driven features를 묶은 compound API입니다.
+- `OLSXVectorLayer`: vector layer, source, single feature, data-driven features, draw interaction을 묶은 compound API입니다.
 - `createVectorLayer()`: feature type/data 타입을 고정한 typed vector layer factory입니다.
 
 ## Map Ref와 Registry
@@ -131,9 +131,9 @@ export function CustomToolbar() {
 
 ## Vector Layer
 
-`OLSXVectorLayer`의 기본 흐름은 `Layer -> Source -> Feature/Features`입니다.
+`OLSXVectorLayer`의 기본 흐름은 `Layer -> Source -> Feature/Features/Draw`입니다.
 
-`Feature`는 단일 OpenLayers `Feature`를 등록하고, `Features`는 data 배열을 id 기반 feature group으로 등록합니다.
+`Feature`는 단일 OpenLayers `Feature`를 등록하고, `Features`는 data 배열을 id 기반 feature group으로 등록합니다. `Draw`는 해당 source에 도형을 그리는 인터랙션을 추가합니다.
 
 ```tsx
 import type { FeatureLike } from "ol/Feature";
@@ -188,6 +188,8 @@ export function PlacesMap({ places }: { places: Place[] }) {
 }
 ```
 
+> **참고:** `Feature`나 `Features`에 `onClick` 핸들러가 등록되어 있다면 마우스를 올렸을 때 자동으로 커서가 `pointer`로 변경됩니다. `onHover`를 통해 커스텀 호버 이벤트를 처리할 수도 있습니다.
+
 ### Feature Diff Upsert
 
 `Features`는 data가 바뀔 때 전체 feature를 매번 제거하고 다시 추가하지 않습니다.
@@ -198,6 +200,17 @@ export function PlacesMap({ places }: { places: Place[] }) {
 - 유지되는 id는 같은 OpenLayers `Feature` 인스턴스의 geometry와 metadata만 업데이트합니다.
 
 이 방식은 대규모 data 업데이트에서 불필요한 remove/add 비용과 event/style churn을 줄입니다.
+
+### Draw Interaction
+
+`Draw` 컴포넌트를 사용하여 지도에 도형(LineString, Polygon, Point 등)을 직접 그릴 수 있습니다.
+
+```tsx
+<PlaceLayer id="drawing-layer">
+  <PlaceLayer.Source />
+  <PlaceLayer.Draw type="LineString" />
+</PlaceLayer>
+```
 
 ## Vector Source Registry
 
