@@ -5,19 +5,16 @@
  * @ai-depends VectorLayer, VectorSource, Feature/Features vector source components.
  * @ai-used-by src/layers/olsx-vector-layer/index.ts and consumers needing typed layer-specific data.
  * @ai-keywords createVectorLayer, defineOlsxVectorLayer, OLSXVectorLayerCompound, Feature, Features.
- * @ai-notes Preserve the compound component shape: Layer.Source, Layer.Feature, Layer.Features, and legacy Layer.Features.
+ * @ai-notes Preserve the compound component shape: Layer.Source, Layer.Feature, Layer.Features, and legacy Layer.FeatureSet.
  */
 
 import type { ComponentType } from "react";
-import { OLSXFeature } from "../components/OLSXFeature";
-import { OLSXFeatures } from "../components/OLSXFeatures";
 import { OLSXVectorLayer } from "../components/OLSXVectorLayer";
-import { OLSXVectorSource } from "../components/OLSXVectorSource";
-import type {
-  OLSXFeatureProps,
-  OLSXFeaturesProps,
-  OLSXVectorLayerProps,
-} from "../types";
+import { OLSXVectorSource } from "../olsx-vector-source";
+import { OLSXFeature } from "../olsx-vector-source/components/Feature";
+import { OLSXFeatures } from "../olsx-vector-source/components/Features";
+import type { OLSXFeatureProps } from "../olsx-vector-source/types";
+import type { OLSXFeaturesProps, OLSXVectorLayerProps } from "../types";
 
 export type OLSXVectorLayerCompound<
   TTypes extends readonly string[] = readonly string[],
@@ -27,6 +24,7 @@ export type OLSXVectorLayerCompound<
   Source: typeof OLSXVectorSource;
   Feature: ComponentType<OLSXFeatureProps<TTypes[number]>>;
   Features: ComponentType<OLSXFeaturesProps<TTypes[number], TData>>;
+  FeatureSet: ComponentType<OLSXFeaturesProps<TTypes[number], TData>>;
 };
 
 export function defineOlsxVectorLayer<
@@ -40,6 +38,9 @@ export function defineOlsxVectorLayer<
       Source: OLSXVectorSource,
       Feature: OLSXFeature as ComponentType<OLSXFeatureProps<TTypes[number]>>,
       Features: OLSXFeatures as ComponentType<
+        OLSXFeaturesProps<TTypes[number], TData>
+      >,
+      FeatureSet: OLSXFeatures as ComponentType<
         OLSXFeaturesProps<TTypes[number], TData>
       >,
     },

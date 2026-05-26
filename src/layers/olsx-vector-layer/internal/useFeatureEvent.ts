@@ -1,48 +1,54 @@
 /**
- * @ai-purpose React hooks that manage singleclick and pointermove events for a group of OpenLayers Features.
+ * @ai-purpose React hooks that manage singleclick and pointermove events for a single OpenLayers Feature.
  * @ai-entry false
  * @ai-domain gis
  * @ai-depends listenerRegistry, vectorLayerContext, findFeatureAtEvent
- * @ai-used-by OLSXFeatures component
- * @ai-keywords useFeaturesEvent, useFeaturesSingleclick, useFeaturesPointermove, events
+ * @ai-used-by OLSXFeature component
+ * @ai-keywords useFeatureEvent, useFeatureSingleclick, useFeaturePointermove, events
  */
 
-import type { MapBrowserEvent } from "ol";
+import { Feature, MapBrowserEvent } from "ol";
 import type { FeatureLike } from "ol/Feature";
 import { useCallback, useEffect, useRef } from "react";
-import { FEATURE_PROPERTIES_KEY } from "../../../core/constants";
+import {
+  FEATURE_LAYER_ID_KEY,
+  FEATURE_PROPERTIES_KEY,
+  FEATURE_TYPE_KEY,
+} from "../../../core/constants";
 import {
   registerMapListener,
   type MapEventTarget,
 } from "../../../core/listeners/listenerRegistry";
 import { useMapRefsContext } from "../../../core/model/context";
+import { isFeature } from "../../../core/utils/olsxUtils";
 import { findFeatureAtEvent } from "../../../core/utils/olUtils";
-import { isFeatureInFeatures } from "../../../core/utils/olsxUtils";
-import { useVectorLayerContext } from "./vectorLayerContext";
+import { useVectorLayerContext } from "../internal/vectorLayerContext";
 
-function useIsFeaturesFeature(
-  layerId: string,
-  featuresId: string,
-  type: string,
-) {
+function useIsFeature(layerId: string, featureId: string, type: string) {
   return useCallback(
-    (feat: FeatureLike) => isFeatureInFeatures(feat, layerId, featuresId, type),
-    [featuresId, layerId, type],
+    (feat: FeatureLike) => isFeature(feat, layerId, featureId, type),
+    [featureId, layerId, type],
   );
 }
 
-export function useFeaturesSingleclick<
+export function useFeatureSingleclick<
   TType extends string,
   TData extends object,
 >(
-  featuresId: string,
+  featureId: string,
   type: TType,
   onClick: ((item: TData, feature: FeatureLike) => void) | undefined,
 ) {
   const { mapRef, listenerRegistryRef } = useMapRefsContext();
   const { id: layerId, vectorSourceRef } = useVectorLayerContext();
 
-  const predicate = useIsFeaturesFeature(layerId, featuresId, type);
+  const predicate = useCallback(
+    (feature: FeatureLike): feature is Feature =>
+      feature.getId() === featureId &&
+      feature[FEATURE_LAYER_ID_KEY] === layerId &&
+      feature[FEATURE_TYPE_KEY] === type,
+    [featureId, layerId, type],
+  );
 
   useEffect(() => {
     const map = mapRef?.current;
@@ -50,7 +56,7 @@ export function useFeaturesSingleclick<
 
     if (!vectorSourceRef.current) {
       console.warn(
-        `Layer with id "${layerId}" does not have a vector source. Click handler for features "${featuresId}" will not be set.`,
+        `Layer with id "${layerId}" does not have a vector source. Click handler for features "${featureId}" will not be set.`,
       );
       return;
     }
@@ -68,12 +74,12 @@ export function useFeaturesSingleclick<
     return registerMapListener(
       listenerRegistryRef.current,
       map as unknown as MapEventTarget,
-      `features:${layerId}:${featuresId}:singleclick`,
+      `feature:${layerId}:${featureId}:singleclick`,
       "singleclick",
       handleClick as (event: never) => void,
     );
   }, [
-    featuresId,
+    featureId,
     layerId,
     listenerRegistryRef,
     mapRef,
@@ -83,18 +89,18 @@ export function useFeaturesSingleclick<
   ]);
 }
 
-export function useFeaturesPointermove<
+export function useFeaturePointermove<
   TType extends string,
   TData extends object,
 >(
-  featuresId: string,
+  featureId: string,
   type: TType,
   onHover: ((item: TData, feature: FeatureLike) => void) | undefined,
 ) {
   const { mapRef, listenerRegistryRef } = useMapRefsContext();
   const { id: layerId, vectorSourceRef } = useVectorLayerContext();
 
-  const predicate = useIsFeaturesFeature(layerId, featuresId, type);
+  const predicate = useIsFeature(layerId, featureId, type);
 
   const lastHoveredFeatureRef = useRef<FeatureLike | null>(null);
 
@@ -104,7 +110,7 @@ export function useFeaturesPointermove<
 
     if (!vectorSourceRef.current) {
       console.warn(
-        `Layer with id "${layerId}" does not have a vector source. Hover handler for features "${featuresId}" will not be set.`,
+        `Layer with id "${layerId}" does not have a vector source. Hover handler for feature "${featureId}" will not be set.`,
       );
       return;
     }
@@ -134,12 +140,12 @@ export function useFeaturesPointermove<
     return registerMapListener(
       listenerRegistryRef.current,
       map as unknown as MapEventTarget,
-      `features:${layerId}:${featuresId}:pointermove`,
+      `feature:${layerId}:${featureId}:pointermove`,
       "pointermove",
       handlePointerMove as (event: never) => void,
     );
   }, [
-    featuresId,
+    featureId,
     layerId,
     listenerRegistryRef,
     mapRef,

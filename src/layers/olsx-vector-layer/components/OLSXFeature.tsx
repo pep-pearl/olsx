@@ -1,55 +1,29 @@
-import { Feature } from "ol";
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { forwardRef, useImperativeHandle } from "react";
+import { useFeature } from "../internal/useFeature";
 import {
-  FEATURE_ID_KEY,
-  FEATURE_LAYER_ID_KEY,
-  FEATURE_PROPERTIES_KEY,
-  FEATURE_TYPE_KEY,
-} from "../../../core/constants";
-import { useVectorLayerContext } from "../internal/vectorLayerContext";
+  useFeaturePointermove,
+  useFeatureSingleclick,
+} from "../internal/useFeatureEvent";
 import type { OLSXFeatureProps, OLSXFeatureRef } from "../types";
 
-export function OLSXFeatureComp(
-  { id: featureId, type, geometry, properties }: OLSXFeatureProps,
+export function OLSXFeatureComp<
+  TType extends string = string,
+  TData extends object = object,
+>(
+  {
+    id: featureId,
+    type,
+    geometry,
+    data,
+    onClick,
+    onHover,
+  }: OLSXFeatureProps<TType, TData>,
   ref: React.ForwardedRef<OLSXFeatureRef>,
 ) {
-  const { id: layerId, vectorSourceRef, featuresRegistryRef } =
-    useVectorLayerContext();
-  const featureRef = useRef<Feature | null>(null);
+  const { featureRef } = useFeature({ featureId, type, geometry, data });
 
-  useEffect(() => {
-    const vectorSource = vectorSourceRef.current;
-    if (!vectorSource) return;
-    const featuresRegistry = featuresRegistryRef.current;
-
-    const feature = new Feature({
-      geometry,
-      type,
-      [FEATURE_ID_KEY]: featureId,
-      [FEATURE_LAYER_ID_KEY]: layerId,
-      [FEATURE_TYPE_KEY]: type,
-      [FEATURE_PROPERTIES_KEY]: properties,
-    });
-    feature.setId(featureId);
-
-    vectorSource.addFeature(feature);
-    featuresRegistry.set(featureId, feature);
-    featureRef.current = feature;
-
-    return () => {
-      vectorSource.removeFeature(feature);
-      featuresRegistry.delete(featureId);
-      featureRef.current = null;
-    };
-  }, [
-    featureId,
-    featuresRegistryRef,
-    geometry,
-    layerId,
-    properties,
-    type,
-    vectorSourceRef,
-  ]);
+  useFeatureSingleclick<TType, TData>(featureId, type, onClick);
+  useFeaturePointermove<TType, TData>(featureId, type, onHover);
 
   useImperativeHandle(
     ref,

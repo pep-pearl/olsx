@@ -8,35 +8,47 @@
  * @ai-notes Feature identity and event data are stored on OpenLayers features by the hooks.
  */
 
+import { useImperativeHandle } from "react";
 import { useFeatures } from "../internal/useFeatures";
 import {
   useFeaturesPointermove,
   useFeaturesSingleclick,
 } from "../internal/useFeaturesEvent";
-import type { FeaturesProps } from "../types";
+import type { OLSXFeaturesProps } from "../types";
 
 export function OLSXFeatures<
   TType extends string = string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  TData extends object = any,
->({
-  id,
-  type,
-  data,
-  getGeometry,
-  getId,
-  onClick,
-  onHover,
-}: FeaturesProps<TType, TData>) {
-  useFeatures<TType, TData>({
+  TData extends object = object,
+>(
+  {
+    id,
+    type,
+    data,
+    getGeometry,
+    getId,
+    onClick,
+    onHover,
+  }: OLSXFeaturesProps<TType, TData>,
+  ref: React.ForwardedRef<any>,
+) {
+  const { featuresByIdRef } = useFeatures<TType, TData>({
     id,
     data,
     getGeometry,
     getId,
     type,
   });
+
   useFeaturesSingleclick<TType, TData>(id, type, onClick);
   useFeaturesPointermove<TType, TData>(id, type, onHover);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      getFeatures: () => [...featuresByIdRef.current.values()],
+    }),
+    [featuresByIdRef],
+  );
 
   return null;
 }

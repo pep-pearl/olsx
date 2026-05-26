@@ -1,15 +1,14 @@
-import { type FeatureLike } from "ol/Feature";
 import type Feature from "ol/Feature";
+import { type FeatureLike } from "ol/Feature";
 import type { Geometry } from "ol/geom";
 import type VectorLayer from "ol/layer/Vector";
 import type OlVectorSource from "ol/source/Vector";
 import type { Style } from "ol/style";
 import type { FeaturesRegistry } from "./registry/featuresRegistry";
 
-export type FeaturesProps<
+export type OLSXFeaturesProps<
   TType extends string = string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  TData extends object = any,
+  TData extends object = object,
 > = {
   id: string;
   type: TType;
@@ -19,6 +18,8 @@ export type FeaturesProps<
   onClick?: (item: TData, feature: FeatureLike) => void;
   onHover?: (item: TData, feature: FeatureLike) => void;
 };
+
+export type OLSXFeaturesRef = { getFeatures: () => Feature[] };
 
 type VectorStyleResult = Style | Style[] | void;
 
@@ -37,13 +38,16 @@ export type OLSXVectorLayerRef = {
   isVectorLayerReady: boolean;
 };
 
-export type OLSXFeatureProps<TType extends string = string> = {
+export type OLSXFeatureProps<
+  TType extends string = string,
+  TData extends object = object,
+> = {
   id: string;
   type?: TType;
   geometry?: Geometry;
-  properties?: object;
-  onClick?: (feature: FeatureLike) => void;
-  onHover?: (feature: FeatureLike) => void;
+  data: TData;
+  onClick?: (item: TData, feature: FeatureLike) => void;
+  onHover?: (item: TData, feature: FeatureLike) => void;
 };
 
 export type OLSXFeatureRef = {

@@ -1,27 +1,36 @@
+/**
+ * @ai-purpose React hook that manages the lifecycle of multiple OpenLayers features using diff/upsert.
+ * @ai-entry false
+ * @ai-domain gis
+ * @ai-depends featuresDiff, vectorLayerContext, featuresRegistry
+ * @ai-used-by OLSXFeatures component
+ * @ai-keywords useFeatures, upsertFeatures, removeFeatures, diff, registry
+ */
+
 import { useEffect, useRef } from "react";
-import { useVectorLayerContext } from "./vectorLayerContext";
+import type { OLSXFeaturesProps } from "../types";
 import {
   removeFeatures,
-  type FeatureDiffState,
   upsertFeatures,
+  type FeatureDiffState,
 } from "./featuresDiff";
-import type { FeaturesProps } from "../types";
+import { useVectorLayerContext } from "./vectorLayerContext";
 
-export function useFeatures<
-  TType extends string,
-  TData extends object,
->({
+export function useFeatures<TType extends string, TData extends object>({
   data,
   getGeometry,
   getId,
   id: featuresId,
   type,
 }: Pick<
-  FeaturesProps<TType, TData>,
+  OLSXFeaturesProps<TType, TData>,
   "data" | "getGeometry" | "getId" | "id" | "type"
 >) {
-  const { id: layerId, vectorSourceRef, featuresRegistryRef } =
-    useVectorLayerContext();
+  const {
+    id: layerId,
+    vectorSourceRef,
+    featuresRegistryRef,
+  } = useVectorLayerContext();
   const featuresByIdRef = useRef<FeatureDiffState>(new Map());
 
   useEffect(() => {
@@ -71,4 +80,6 @@ export function useFeatures<
       featuresRegistry.delete(featuresId);
     };
   }, [featuresId, featuresRegistryRef, vectorSourceRef]);
+
+  return { featuresByIdRef };
 }
