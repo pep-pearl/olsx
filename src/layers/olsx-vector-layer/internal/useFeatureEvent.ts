@@ -7,7 +7,7 @@
  * @ai-keywords useFeatureEvent, useFeatureSingleclick, useFeaturePointermove, events
  */
 
-import { Feature, MapBrowserEvent } from "ol";
+import type { MapBrowserEvent } from "ol";
 import type { FeatureLike } from "ol/Feature";
 import { useCallback, useEffect, useRef } from "react";
 import {
@@ -20,14 +20,18 @@ import {
   type MapEventTarget,
 } from "../../../core/listeners/listenerRegistry";
 import { useMapRefsContext } from "../../../core/model/context";
-import { buildListenerKey, isFeature } from "../../../core/utils/olsxUtils";
+import {
+  buildListenerKey,
+  getListenerKey,
+  isSingleFeature,
+} from "../../../core/utils/olsxUtils";
 import { findFeatureAtEvent } from "../../../core/utils/olUtils";
 import { useVectorLayerContext } from "../internal/vectorLayerContext";
 
-function useIsFeature(layerId: string) {
+function useIsFeature(layerId: string, featureId: string) {
   return useCallback(
-    (feat: FeatureLike) => isFeature(feat, layerId),
-    [layerId],
+    (feat: FeatureLike) => isSingleFeature(feat, layerId, featureId),
+    [featureId, layerId],
   );
 }
 
@@ -38,10 +42,7 @@ export function useFeatureSingleclick<TData extends object>(
   const { mapRef, listenerRegistryRef } = useMapRefsContext();
   const { id: layerId, vectorSourceRef } = useVectorLayerContext();
 
-  const predicate = useCallback(
-    (feature: FeatureLike): feature is Feature => isFeature(feature, layerId),
-    [layerId],
-  );
+  const predicate = useIsFeature(layerId, featureId);
 
   useEffect(() => {
     const map = mapRef?.current;
@@ -85,17 +86,18 @@ export function useFeatureSingleclick<TData extends object>(
 export function useFeaturePointermove<TData extends object>(
   featureId: string,
   onHover: ((item: TData, feature: FeatureLike) => void) | undefined,
+  hasClick: boolean,
 ) {
   const { mapRef, listenerRegistryRef } = useMapRefsContext();
   const { id: layerId, vectorSourceRef } = useVectorLayerContext();
 
-  const predicate = useIsFeature(layerId);
+  const predicate = useIsFeature(layerId, featureId);
 
   const lastHoveredFeatureRef = useRef<FeatureLike | null>(null);
 
   useEffect(() => {
     const map = mapRef?.current;
-    if (!map || !onHover) return;
+    if (!map || (!onHover && !hasClick)) return;
 
     if (!vectorSourceRef.current) {
       console.warn(
@@ -108,22 +110,29 @@ export function useFeaturePointermove<TData extends object>(
       if (event.dragging) return;
 
       const feature = findFeatureAtEvent(map, event, predicate);
+      const targetElement = map.getTargetElement();
 
       if (!feature || !("get" in feature)) {
         lastHoveredFeatureRef.current = null;
+        targetElement.style.cursor = "";
         return;
       }
 
-      if (lastHoveredFeatureRef.current === feature) {
-        return;
+      if (onHover && lastHoveredFeatureRef.current !== feature) {
+        lastHoveredFeatureRef.current = feature;
+
+        const item = feature.get(FEATURE_PROPERTIES_KEY) as TData | undefined;
+        if (item) {
+          onHover(item, feature);
+        }
       }
 
-      lastHoveredFeatureRef.current = feature;
+      const listenerKey = getListenerKey(feature, EVENT_TYPE_SINGLECLICK);
+      const hasSingleclick = listenerKey
+        ? listenerRegistryRef.current.has(listenerKey)
+        : false;
 
-      const item = feature.get(FEATURE_PROPERTIES_KEY) as TData | undefined;
-      if (!item) return;
-
-      onHover(item, feature);
+      targetElement.style.cursor = hasSingleclick ? "pointer" : "";
     };
 
     return registerMapListener(
@@ -135,6 +144,7 @@ export function useFeaturePointermove<TData extends object>(
     );
   }, [
     featureId,
+    hasClick,
     layerId,
     listenerRegistryRef,
     mapRef,

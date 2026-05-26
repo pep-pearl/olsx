@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   clearMapListeners,
   createListenerRegistry,
+  registerDrawListener,
   registerMapListener,
 } from "./listenerRegistry";
 
@@ -65,4 +66,31 @@ test("clearMapListeners unregisters every stored listener", () => {
 
   assert.equal(registry.has("features:markers"), false);
   assert.deepEqual(unregistered, ["singleclick", "pointermove"]);
+});
+
+test("listener registry stores draw listeners and unregisters cleanup", () => {
+  const registry = createListenerRegistry();
+  const unregistered: string[] = [];
+  const draw = {
+    on: (type: string) => ({
+      unlisten: () => {
+        unregistered.push(type);
+      },
+    }),
+  };
+
+  const cleanup = registerDrawListener(
+    registry,
+    draw,
+    "draw:drawstart",
+    "drawstart",
+    () => undefined,
+  );
+
+  assert.equal(registry.get("draw:drawstart")?.length, 1);
+
+  cleanup();
+
+  assert.equal(registry.has("draw:drawstart"), false);
+  assert.deepEqual(unregistered, ["drawstart"]);
 });

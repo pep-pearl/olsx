@@ -77,6 +77,8 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/layers/olsx-vector-layer/components/OLSXFeature.tsx`
 - `src/layers/olsx-vector-layer/components/OLSXFeatures.tsx`
 - `src/layers/olsx-vector-layer/components/OLSXDraw.tsx`
+- `src/layers/olsx-vector-layer/components/OLSXDrawTooltip.tsx`
+- `src/layers/olsx-vector-layer/headless/useDrawControl.ts`
 - `src/layers/olsx-vector-layer/internal/useOLSXVectorLayer.ts`
 - `src/layers/olsx-vector-layer/internal/useFeature.ts`
 - `src/layers/olsx-vector-layer/internal/useFeatureEvent.ts`
@@ -122,6 +124,7 @@ Use it to decide which files to read before opening large parts of the repositor
 - `OLSXVectorLayer` is the default compound vector API. `createVectorLayer` returns a typed compound component for user-defined feature types/data.
 - `Features` uses id-based diff/upsert in `featuresDiff.ts` so data changes add, remove, or update only the affected OpenLayers features.
 - Feature click/hover handlers register map events through `src/core/listeners/listenerRegistry.ts` rather than directly attaching unmanaged feature-local listeners.
+- `OLSXVectorLayer.Draw` accepts `id` and `active`; event listener keys use `buildDrawListenerKey(drawId, eventType)`. `OLSXVectorLayer.Draw.Tooltip` follows the pointer during active drawing, and `useDrawControl` is the headless hook for custom draw-state UI inside a Draw subtree.
 - `OLSXOverlay` mounts React children into an OpenLayers `Overlay` via a React portal; use it for popups, labels, callouts, and map-anchored UI.
 - OpenLayers object lifecycle is intentionally kept in React components/hooks rather than hidden behind a closed abstraction.
 - `AGENTS.md` and `docs/rules/context-navigation.md` define how future agents should choose files.

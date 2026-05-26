@@ -208,8 +208,32 @@ export function PlacesMap({ places }: { places: Place[] }) {
 ```tsx
 <PlaceLayer id="drawing-layer">
   <PlaceLayer.Source />
-  <PlaceLayer.Draw type="LineString" />
+  <PlaceLayer.Draw
+    id="route-draw"
+    active={isDrawingMode}
+    type="LineString"
+    onDrawStart={(event) => console.log("start", event.feature)}
+    onDrawEnd={(event) => console.log("end", event.feature)}
+  >
+    <PlaceLayer.Draw.Tooltip>Click to keep drawing</PlaceLayer.Draw.Tooltip>
+  </PlaceLayer.Draw>
 </PlaceLayer>
+```
+
+`Draw`는 `active`가 true일 때만 그릴 수 있습니다. interaction은 유지하고 `draw.setActive(active)`만 갱신하므로 toggle 시 source/interaction을 재생성하지 않습니다.
+
+`id`를 넘기면 draw event key는 `draw:{id}:{event}` 형태로 관리됩니다. `id`를 생략하면 내부에서 stable id를 만들어 listener registry에 사용합니다.
+
+`Draw.Tooltip`은 drawing 중에만 보이며 pointer coordinate를 따라가는 overlay입니다. 직접 UI를 만들고 싶다면 `useDrawControl()`을 `Draw` children 아래에서 사용할 수 있습니다.
+
+```tsx
+import { useDrawControl } from "olsx";
+
+function DrawStatus() {
+  const { id, active, isDrawing, coordinate } = useDrawControl();
+
+  return active && isDrawing ? <div>{id}: {coordinate?.join(", ")}</div> : null;
+}
 ```
 
 ## Vector Source Registry

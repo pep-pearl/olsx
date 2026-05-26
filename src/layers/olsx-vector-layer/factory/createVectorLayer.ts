@@ -10,6 +10,7 @@
 
 import type { ComponentType } from "react";
 import { OLSXDraw } from "../components/OLSXDraw";
+import type { OLSXDrawTooltipProps } from "../components/OLSXDrawTooltip";
 import { OLSXFeature } from "../components/OLSXFeature";
 import { OLSXFeatures } from "../components/OLSXFeatures";
 import { OLSXVectorLayer } from "../components/OLSXVectorLayer";
@@ -29,7 +30,9 @@ export type OLSXVectorLayerCompound<
   Source: typeof OLSXVectorSource;
   Feature: ComponentType<OLSXFeatureProps<TTypes[number]>>;
   Features: ComponentType<OLSXFeaturesProps<TTypes[number], TData>>;
-  Draw: ComponentType<OLSXDrawProps>;
+  Draw: ComponentType<OLSXDrawProps> & {
+    Tooltip: ComponentType<OLSXDrawTooltipProps>;
+  };
 };
 
 export function defineOlsxVectorLayer<
@@ -45,7 +48,9 @@ export function defineOlsxVectorLayer<
       Features: OLSXFeatures as ComponentType<
         OLSXFeaturesProps<TTypes[number], TData>
       >,
-      Draw: OLSXDraw as ComponentType<OLSXDrawProps>,
+      Draw: OLSXDraw as ComponentType<OLSXDrawProps> & {
+        Tooltip: ComponentType<OLSXDrawTooltipProps>;
+      },
     },
   ) as OLSXVectorLayerCompound<TTypes, TData>;
 }

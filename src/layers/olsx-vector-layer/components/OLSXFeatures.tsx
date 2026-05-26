@@ -14,7 +14,7 @@ import {
   useFeaturesPointermove,
   useFeaturesSingleclick,
 } from "../internal/useFeaturesEvent";
-import type { OLSXFeaturesProps } from "../types";
+import type { OLSXFeaturesProps, OLSXFeaturesRef } from "../types";
 
 export function OLSXFeatures<
   TType extends string = string,
@@ -29,7 +29,7 @@ export function OLSXFeatures<
     onClick,
     onHover,
   }: OLSXFeaturesProps<TType, TData>,
-  ref: React.ForwardedRef<any>,
+  ref: React.ForwardedRef<OLSXFeaturesRef>,
 ) {
   const { featuresByIdRef } = useFeatures<TType, TData>({
     id,
@@ -40,7 +40,12 @@ export function OLSXFeatures<
   });
 
   useFeaturesSingleclick<TType, TData>(id, featureType, onClick);
-  useFeaturesPointermove<TType, TData>(id, featureType, onHover);
+  useFeaturesPointermove<TType, TData>(
+    id,
+    featureType,
+    onHover,
+    Boolean(onClick),
+  );
 
   useImperativeHandle(
     ref,

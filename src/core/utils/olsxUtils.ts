@@ -54,12 +54,29 @@ export function isFeature(
   );
 }
 
+export function isSingleFeature(
+  feature: FeatureLike,
+  layerId: string,
+  featureId: string,
+): feature is GettableFeature {
+  if (!isFeature(feature, layerId)) return false;
+
+  return (
+    feature.get(FEATURE_ID_KEY) === featureId &&
+    !feature.get(FEATURE_GROUP_ID_KEY)
+  );
+}
+
 export function buildListenerKey(
   layerId: string,
   featureOrFeaturesId: string,
   eventType: string,
 ) {
   return `${layerId}:${featureOrFeaturesId}:${eventType}`;
+}
+
+export function buildDrawListenerKey(drawId: string, eventType: string) {
+  return `draw:${drawId}:${eventType}`;
 }
 
 export function getListenerKey(

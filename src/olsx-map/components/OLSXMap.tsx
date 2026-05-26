@@ -14,6 +14,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import type { Control } from "ol/control";
 import {
   BaseLayerContext,
   MapReadyContext,
@@ -23,7 +24,7 @@ import type { BaseLayerType } from "../../core/types";
 import { useOLSXMap } from "../internal/useOLSXMap";
 import type { OLSXMapProps, OLSXMapRef } from "../types";
 
-const EMPTY_CONTROLS: any[] = [];
+const EMPTY_CONTROLS: Control[] = [];
 
 function OLSXMapComp(
   { style, children, defaultControl = EMPTY_CONTROLS }: OLSXMapProps,

@@ -2,7 +2,7 @@ import type Feature from "ol/Feature";
 import { type FeatureLike } from "ol/Feature";
 import type { Geometry } from "ol/geom";
 import type { Type } from "ol/geom/Geometry";
-import Draw from "ol/interaction/Draw";
+import Draw, { type DrawEvent } from "ol/interaction/Draw";
 import type VectorLayer from "ol/layer/Vector";
 import type OlVectorSource from "ol/source/Vector";
 import type { Style } from "ol/style";
@@ -68,10 +68,25 @@ export type OLSXVectorSourceRef = {
 };
 
 export type OLSXDrawProps = {
+  id?: string;
+  active?: boolean;
   type?: Type;
   style?: StyleLike | FlatStyleLike;
+  onDrawStart?: (event: DrawEvent) => void;
+  onDrawEnd?: (event: DrawEvent) => void;
+  onDrawAbort?: (event: DrawEvent) => void;
+  children?:
+    | React.ReactNode
+    | ((props: {
+        draw: Draw | null;
+        id: string;
+        active: boolean;
+        isDrawReady: boolean;
+      }) => React.ReactNode);
 };
 
 export type OLSXDrawRef = {
   getDraw: () => Draw | null;
+  getId: () => string;
+  isActive: () => boolean;
 };

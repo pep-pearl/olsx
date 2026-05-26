@@ -112,6 +112,11 @@ function App() {
     setCoor(fromLonLat([item.lon, item.lat]));
   }
 
+  void seoulDummyData;
+  void getId;
+  void getGeometry;
+  void handleClickFeature;
+
   const overlayRef = useRef<OLSXOverlayRef>(null);
 
   function overlayClose() {
@@ -173,7 +178,9 @@ function App() {
             handleClickFeature(item);
           }}
         /> */}
-        <OLSXVectorLayer.Draw type="Polygon" />
+        <OLSXVectorLayer.Draw type="Polygon">
+          <OLSXVectorLayer.Draw.Tooltip />
+        </OLSXVectorLayer.Draw>
       </OLSXVectorLayer>
     </OLSXMap>
   );
