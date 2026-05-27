@@ -30,6 +30,8 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/olsx-overlay/` contains the React portal wrapper for OpenLayers overlays.
 - `src/presets/base-layer/` is the built-in replaceable base-map preset for street/satellite tile layers.
 - `src/controls/` contains default UI controls and headless control hooks. Default components live in `default/`; custom UI hooks live in `headless/`.
+- `src/layers/olsx-vector-layer/draw/` contains shared drawing primitives for measurement presets. Public drawing types live in `draw/types.ts`; pure measurement/history/manual-sketch helpers live under `draw/internal/`.
+- `docs/getting-started/`, `docs/api/`, `docs/guides/`, and `docs/examples/` contain the official public documentation. `README.md` is the documentation entrypoint. Public docs are Korean-first and include hidden `@ai-purpose`, `@ai-doc-kind`, `@ai-keywords`, and `@ai-related` comments for AI routing.
 - `playground/` is the Vite demo app used for local manual validation.
 
 ## Read First By Task
@@ -78,7 +80,16 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/layers/olsx-vector-layer/components/OLSXFeatures.tsx`
 - `src/layers/olsx-vector-layer/components/OLSXDraw.tsx`
 - `src/layers/olsx-vector-layer/components/OLSXDrawTooltip.tsx`
+- `src/layers/olsx-vector-layer/components/OLSXDistanceDraw.tsx`
+- `src/layers/olsx-vector-layer/components/OLSXAreaDraw.tsx`
+- `src/layers/olsx-vector-layer/components/OLSXCircleDraw.tsx`
+- `src/layers/olsx-vector-layer/components/drawingPresetStyles.ts`
+- `src/layers/olsx-vector-layer/draw/types.ts`
+- `src/layers/olsx-vector-layer/draw/internal/measurement.ts`
+- `src/layers/olsx-vector-layer/draw/internal/drawingHistory.ts`
+- `src/layers/olsx-vector-layer/draw/internal/manualDrawing.ts`
 - `src/layers/olsx-vector-layer/headless/useDrawControl.ts`
+- `src/layers/olsx-vector-layer/headless/useDrawingHistory.ts`
 - `src/layers/olsx-vector-layer/internal/useOLSXVectorLayer.ts`
 - `src/layers/olsx-vector-layer/internal/useFeature.ts`
 - `src/layers/olsx-vector-layer/internal/useFeatureEvent.ts`
@@ -103,15 +114,31 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/controls/default/Controls.tsx`
 - `src/controls/default/ZoomControl.tsx`
 - `src/controls/default/BaseLayerToggle.tsx`
+- `src/controls/default/DrawingToolbar.tsx`
 - `src/controls/default/icons.tsx`
 - `src/controls/default/styles.ts`
 - `src/controls/headless/useZoomControl.ts`
 - `src/controls/headless/useBaseLayerControl.ts`
+- `src/controls/headless/useDrawingControls.ts`
 
 ### Demo / Usage Examples
 
 - `playground/App.tsx`
 - `README.md`
+- `docs/getting-started/quick-start.md`
+- `docs/api/`
+- `docs/guides/`
+- `docs/examples/`
+
+### Documentation Lookup
+
+- `README.md` — human and AI entrypoint for installation, quick start, docs, examples, and development commands.
+- `docs/getting-started/` — installation, quick start, and migration notes.
+- `docs/api/` — component and hook reference docs. Search `@ai-doc-kind api-reference`.
+- `docs/guides/` — workflow and trade-off guides. Search `@ai-doc-kind guide`.
+- `docs/examples/` — copy-pasteable examples. Search `@ai-doc-kind example`.
+- `docs/internal/` — internal QA or regression notes linked by guides when relevant.
+- For AI routing, prefer `@ai-keywords` over broad source scans when the task is documentation-only.
 
 ## Navigation Notes
 
@@ -121,10 +148,21 @@ Use it to decide which files to read before opening large parts of the repositor
 - `useMountLayer` is the shared lifecycle hook for OpenLayers layer components and delegates add/remove/registry cleanup to `src/core/internal/layerLifecycle.ts`; check it before adding another layer wrapper.
 - `OLSXTileLayer` is the generic public tile-layer wrapper. `BaseLayer` remains the opinionated street/satellite preset.
 - Controls are split between `src/controls/default/` ready-to-use UI and `src/controls/headless/` hooks for custom UI.
+- Drawing controls follow that same split: `DrawingToolbar` is the default button UI, while `useDrawingControls` owns mode/cancel/undo/redo/clear command wiring for custom toolbars.
 - `OLSXVectorLayer` is the default compound vector API. `createVectorLayer` returns a typed compound component for user-defined feature types/data.
 - `Features` uses id-based diff/upsert in `featuresDiff.ts` so data changes add, remove, or update only the affected OpenLayers features.
 - Feature click/hover handlers register map events through `src/core/listeners/listenerRegistry.ts` rather than directly attaching unmanaged feature-local listeners.
-- `OLSXVectorLayer.Draw` accepts `id` and `active`; event listener keys use `buildDrawListenerKey(drawId, eventType)`. `OLSXVectorLayer.Draw.Tooltip` follows the pointer during active drawing, and `useDrawControl` is the headless hook for custom draw-state UI inside a Draw subtree.
+- `OLSXVectorLayer.Draw` accepts `id` and `active`; event listener keys use `buildDrawListenerKey(drawId, eventType)`. `OLSXVectorLayer.Draw.Tooltip` follows the pointer during active drawing. `useDrawControl` is the headless hook for custom draw-state UI inside a Draw subtree.
+- `OLSXVectorLayer.Draw.Distance`, `Draw.Area`, and `Draw.Circle` are the default measurement presets. They manage measurement sketch/completed features directly so right-click completion, dots, popups, delete, and undo/redo share one drawing id and stay separate from generic OpenLayers `Draw` interaction lifecycle.
+- Measurement drawing presets should reuse `draw/internal/measurement.ts`, `draw/internal/drawingHistory.ts`, `draw/internal/manualDrawing.ts`, and `useDrawingHistory` instead of duplicating distance/area/circle completion, source sync, and undo/redo bookkeeping.
 - `OLSXOverlay` mounts React children into an OpenLayers `Overlay` via a React portal; use it for popups, labels, callouts, and map-anchored UI.
 - OpenLayers object lifecycle is intentionally kept in React components/hooks rather than hidden behind a closed abstraction.
 - `AGENTS.md` and `docs/rules/context-navigation.md` define how future agents should choose files.
+
+## Documentation discovery:
+
+1. docs/api/\*
+2. docs/guides/\*
+3. docs/examples/\*
+4. @ai-keywords
+5. source

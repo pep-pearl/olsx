@@ -1,6 +1,7 @@
 import { BaseLayerToggle } from "./BaseLayerToggle";
 import { controlsStyle } from "./styles";
 import { ZoomControl } from "./ZoomControl";
+import { DrawingToolbar } from "./DrawingToolbar";
 
 type ControlsProps = {
   className?: string;
@@ -19,6 +20,7 @@ function ControlsRoot({ className, style, children }: ControlsProps) {
 type Controls = typeof ControlsRoot & {
   Zoom: typeof ZoomControl;
   BaseLayerToggle: typeof BaseLayerToggle;
+  DrawingToolbar: typeof DrawingToolbar;
   ZoomButton: typeof ZoomControl;
   ToggleBaseLayerButton: typeof BaseLayerToggle;
 };
@@ -26,6 +28,7 @@ type Controls = typeof ControlsRoot & {
 const Controls = ControlsRoot as Controls;
 Controls.Zoom = ZoomControl;
 Controls.BaseLayerToggle = BaseLayerToggle;
+Controls.DrawingToolbar = DrawingToolbar;
 Controls.ZoomButton = ZoomControl;
 Controls.ToggleBaseLayerButton = BaseLayerToggle;
 

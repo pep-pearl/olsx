@@ -121,6 +121,7 @@ export function useDrawControl() {
     id,
     active,
     draw,
+    drawListenerRegistryRef,
     feature,
     coordinate,
     isDrawing,

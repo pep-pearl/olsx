@@ -24,4 +24,5 @@ export type OLSXOverlayProps = {
   style?: React.CSSProperties;
   zIndex?: number;
   children?: React.ReactNode;
+  element?: HTMLElement | null;
 };

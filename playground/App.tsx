@@ -10,6 +10,7 @@ import {
   BaseLayer,
   Controls,
   createVectorLayer,
+  type DrawingControlKind,
   OLSXMap,
   OLSXOverlay,
   OLSXOverlayRef,
@@ -107,6 +108,8 @@ function App() {
   }, []);
 
   const [coor, setCoor] = useState<Coordinate | null>(null);
+  const [activeDrawingKind, setActiveDrawingKind] =
+    useState<DrawingControlKind | null>(null);
 
   function handleClickFeature(item: SeoulPlace) {
     setCoor(fromLonLat([item.lon, item.lat]));
@@ -161,6 +164,10 @@ function App() {
       <Controls>
         <Controls.BaseLayerToggle />
         <Controls.Zoom />
+        <Controls.DrawingToolbar
+          activeKind={activeDrawingKind}
+          onActiveKindChange={setActiveDrawingKind}
+        />
       </Controls>
       <OLSXVectorLayer
         id="another-layer"
@@ -178,9 +185,13 @@ function App() {
             handleClickFeature(item);
           }}
         /> */}
-        <OLSXVectorLayer.Draw type="Polygon">
-          <OLSXVectorLayer.Draw.Tooltip />
-        </OLSXVectorLayer.Draw>
+        <OLSXVectorLayer.Draw.Distance
+          active={activeDrawingKind === "distance"}
+        />
+        <OLSXVectorLayer.Draw.Area active={activeDrawingKind === "area"} />
+        <OLSXVectorLayer.Draw.Circle
+          active={activeDrawingKind === "circle"}
+        />
       </OLSXVectorLayer>
     </OLSXMap>
   );

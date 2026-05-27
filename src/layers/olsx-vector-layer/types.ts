@@ -90,3 +90,7 @@ export type OLSXDrawRef = {
   getId: () => string;
   isActive: () => boolean;
 };
+
+export type { OLSXDistanceDrawProps } from "./components/OLSXDistanceDraw";
+export type { OLSXAreaDrawProps } from "./components/OLSXAreaDraw";
+export type { OLSXCircleDrawProps } from "./components/OLSXCircleDraw";

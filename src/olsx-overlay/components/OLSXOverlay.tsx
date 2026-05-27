@@ -18,6 +18,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import { useMapRefsContext } from "../../core/model/context";
+import { cleanupOverlay } from "../internal/overlayLifecycle";
 import { syncOverlayPosition } from "../internal/overlayPosition";
 import type { OLSXOverlayProps, OLSXOverlayRef } from "../types";
 
@@ -35,6 +36,7 @@ function OLSXOverlayComp(
     style,
     zIndex,
     children,
+    element: propElement,
   }: OLSXOverlayProps,
   ref: React.ForwardedRef<OLSXOverlayRef>,
 ) {
@@ -42,10 +44,13 @@ function OLSXOverlayComp(
 
   const overlayRef = useRef<OlOverlay | null>(null);
 
-  const [element] = useState<HTMLDivElement | null>(() => {
+  const [portalElement] = useState<HTMLDivElement | null>(() => {
     if (typeof document === "undefined") return null;
     return document.createElement("div");
   });
+
+  const isExternalElementMode = propElement !== undefined;
+  const element = isExternalElementMode ? propElement : portalElement;
 
   const isVisible = visible ?? coordinate != null;
 
@@ -65,7 +70,7 @@ function OLSXOverlayComp(
     map.addOverlay(overlay);
 
     return () => {
-      map.removeOverlay(overlay);
+      cleanupOverlay({ map, overlay });
       overlayRef.current = null;
     };
   }, [mapRef, element, id, stopEvent, insertFirst]);
@@ -97,6 +102,13 @@ function OLSXOverlayComp(
   useImperativeHandle(
     ref,
     () => ({
+      /**
+       * Escape hatch for OpenLayers users.
+       *
+       * You may call OpenLayers methods directly.
+       * Do not manually remove this overlay from the map while the React component is mounted.
+       * Do not mutate overlay.getElement().children when children are rendered by React.
+       */
       getOverlay: () => overlayRef.current,
 
       setPosition: (nextCoordinate) => {
@@ -114,7 +126,11 @@ function OLSXOverlayComp(
     [],
   );
 
-  if (!element || !isVisible || !coordinate) {
+  if (isExternalElementMode) {
+    return null;
+  }
+
+  if (!portalElement || !isVisible || !coordinate) {
     return null;
   }
 
@@ -129,7 +145,7 @@ function OLSXOverlayComp(
     >
       {children}
     </div>,
-    element,
+    portalElement,
   );
 }
 

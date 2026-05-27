@@ -1,0 +1,452 @@
+/**
+ * @ai-purpose Declarative component for manual linestring distance drawing, measurement, and tooltips.
+ * @ai-entry false
+ * @ai-domain gis
+ * @ai-depends mapRefsContext, vectorLayerContext, manualDrawing, measurement, OLSXOverlay, useDrawingHistory
+ * @ai-used-by OLSXVectorLayer compound component
+ * @ai-keywords OLSXDistanceDraw, distance, draw, linestring, measurement, sketch
+ */
+
+import type { Coordinate } from "ol/coordinate";
+import Feature from "ol/Feature";
+import LineString from "ol/geom/LineString";
+import Point from "ol/geom/Point";
+import type OlVectorSource from "ol/source/Vector";
+import { Fill, Stroke, Style } from "ol/style";
+import CircleStyle from "ol/style/Circle";
+import type { FlatStyleLike } from "ol/style/flat";
+import type { StyleLike } from "ol/style/Style";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useMapRefsContext } from "../../../core/model/context";
+import { OLSXOverlay } from "../../../olsx-overlay";
+import type { DrawingResult } from "../draw/internal/drawingHistory";
+import {
+  createLineStringFromCoordinates,
+  getCompletedDistanceCoordinates,
+  getDistancePreviewCoordinates,
+  isManualDrawingCompletable,
+  removeFeaturesFromSource,
+  setDrawingIdOnFeatures,
+  syncDrawingResultsToSource,
+  type FeatureDrawingResult,
+} from "../draw/internal/manualDrawing";
+import {
+  createDistanceDrawingResult,
+  formatDrawingLength,
+  getLineSegmentMeasurements,
+  getLineStringLength,
+} from "../draw/internal/measurement";
+import { useDrawingHistory } from "../headless";
+import { useVectorLayerContext } from "../internal/vectorLayerContext";
+import {
+  DONE_TOOLTIP_STYLE,
+  FLOATING_TOOLTIP_STYLE,
+  PRIMARY_VALUE_STYLE,
+  SEGMENT_LABEL_STYLE,
+  deleteButtonStyle,
+} from "./drawingPresetStyles";
+
+export type OLSXDistanceDrawProps = {
+  id?: string;
+  active?: boolean;
+  style?: StyleLike | FlatStyleLike;
+  onComplete?: (result: DrawingResult<Feature>) => void;
+  onDelete?: (result: DrawingResult<Feature>) => void;
+};
+
+const DISTANCE_FEATURE_STYLE = new Style({
+  stroke: new Stroke({ color: "#ec0061", width: 4 }),
+  image: new CircleStyle({
+    radius: 5,
+    fill: new Fill({ color: "#ffffff" }),
+    stroke: new Stroke({ color: "#ec0061", width: 3 }),
+  }),
+});
+
+const DISTANCE_SKETCH_STYLE = new Style({
+  stroke: new Stroke({
+    color: "rgba(236, 0, 97, 0.45)",
+    width: 4,
+    lineDash: [8, 8],
+  }),
+  image: new CircleStyle({
+    radius: 5,
+    fill: new Fill({ color: "rgba(255, 255, 255, 0.7)" }),
+    stroke: new Stroke({ color: "rgba(236, 0, 97, 0.55)", width: 3 }),
+  }),
+});
+
+const DISTANCE_DOT_STYLE = new Style({
+  image: new CircleStyle({
+    radius: 5,
+    fill: new Fill({ color: "#ffffff" }),
+    stroke: new Stroke({ color: "#ec0061", width: 3 }),
+  }),
+});
+
+function getEventCoordinate(
+  map: { getEventCoordinate: (event: MouseEvent) => Coordinate },
+  event: MouseEvent,
+) {
+  return map.getEventCoordinate(event).slice(0, 2);
+}
+
+function getFeatureLineString(feature: Feature) {
+  const geometry = feature.getGeometry();
+  return geometry instanceof LineString ? geometry : null;
+}
+
+export function OLSXDistanceDraw({
+  id = "distance",
+  active = true,
+  style,
+  onComplete,
+  onDelete,
+}: OLSXDistanceDrawProps) {
+  const { mapRef } = useMapRefsContext();
+  const { vectorSourceRef } = useVectorLayerContext();
+  const history = useDrawingHistory<Feature>();
+  const resultSeqRef = useRef(0);
+  const knownResultsRef = useRef(new Map<string, FeatureDrawingResult>());
+  const latestSourceRef = useRef<OlVectorSource | null>(null);
+  const pointsRef = useRef<Coordinate[]>([]);
+  const previewCoordinateRef = useRef<Coordinate | null>(null);
+  const sketchFeatureRef = useRef<Feature<LineString> | null>(null);
+  const [points, setPoints] = useState<Coordinate[]>([]);
+  const [previewCoordinate, setPreviewCoordinate] = useState<Coordinate | null>(
+    null,
+  );
+
+  const previewCoordinates = useMemo(
+    () => getDistancePreviewCoordinates(points, previewCoordinate),
+    [points, previewCoordinate],
+  );
+  const previewLine =
+    previewCoordinates.length > 1
+      ? createLineStringFromCoordinates(previewCoordinates)
+      : null;
+  const drawingTotal = previewLine ? getLineStringLength(previewLine) : 0;
+  const drawingSegments = getLineSegmentMeasurements(previewCoordinates);
+  const isDrawing = points.length > 0;
+  useEffect(() => {
+    latestSourceRef.current = vectorSourceRef.current;
+  });
+
+  const setNextPoints = useCallback((nextPoints: Coordinate[]) => {
+    pointsRef.current = nextPoints;
+    setPoints(nextPoints);
+  }, []);
+
+  const setNextPreviewCoordinate = useCallback(
+    (coordinate: Coordinate | null) => {
+      previewCoordinateRef.current = coordinate;
+      setPreviewCoordinate(coordinate);
+    },
+    [],
+  );
+
+  const clearSketch = useCallback(() => {
+    const source = vectorSourceRef.current;
+    removeFeaturesFromSource(source, [sketchFeatureRef.current]);
+    sketchFeatureRef.current = null;
+    setNextPoints([]);
+    setNextPreviewCoordinate(null);
+  }, [setNextPoints, setNextPreviewCoordinate, vectorSourceRef]);
+
+  const syncSketchFeature = useCallback(() => {
+    const source = vectorSourceRef.current;
+    if (!source) return;
+
+    const coordinates = getDistancePreviewCoordinates(
+      pointsRef.current,
+      previewCoordinateRef.current,
+    );
+
+    if (coordinates.length < 2) {
+      removeFeaturesFromSource(source, [sketchFeatureRef.current]);
+      sketchFeatureRef.current = null;
+      return;
+    }
+
+    const geometry = createLineStringFromCoordinates(coordinates);
+    if (!sketchFeatureRef.current) {
+      sketchFeatureRef.current = new Feature(geometry);
+      sketchFeatureRef.current.setStyle(DISTANCE_SKETCH_STYLE);
+      source.addFeature(sketchFeatureRef.current);
+      return;
+    }
+
+    sketchFeatureRef.current.setGeometry(geometry);
+  }, [vectorSourceRef]);
+
+  const completeDrawing = useCallback(() => {
+    const source = vectorSourceRef.current;
+    const clickedPoints = pointsRef.current;
+    if (
+      !source ||
+      !isManualDrawingCompletable("distance", clickedPoints.length)
+    ) {
+      clearSketch();
+      return;
+    }
+
+    const coordinates = getCompletedDistanceCoordinates(clickedPoints);
+    const feature = new Feature(createLineStringFromCoordinates(coordinates));
+    feature.setStyle(
+      (style as StyleLike | undefined) ?? DISTANCE_FEATURE_STYLE,
+    );
+
+    const result = createDistanceDrawingResult({
+      id: `${id}:result:${resultSeqRef.current++}`,
+      feature,
+    }) as FeatureDrawingResult;
+    result.attachments = coordinates.map((coordinate) => {
+      const dot = new Feature(new Point(coordinate));
+      dot.setStyle(DISTANCE_DOT_STYLE);
+      return dot;
+    });
+
+    setDrawingIdOnFeatures(result);
+    knownResultsRef.current.set(result.id, result);
+    clearSketch();
+    history.complete(result);
+    onComplete?.(result);
+  }, [clearSketch, history, id, onComplete, style, vectorSourceRef]);
+
+  const handleDelete = useCallback(
+    (result: DrawingResult<Feature>) => {
+      history.deleteResult(result.id);
+      onDelete?.(result);
+    },
+    [history, onDelete],
+  );
+
+  useEffect(() => {
+    const source = vectorSourceRef.current;
+    if (!source) return;
+
+    syncDrawingResultsToSource(
+      source,
+      knownResultsRef.current.values(),
+      new Set(history.results.map((result) => result.id)),
+    );
+  }, [history.results, vectorSourceRef]);
+
+  useEffect(() => {
+    if (!active) return;
+
+    return () => {
+      clearSketch();
+    };
+  }, [active, clearSketch]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !active) return;
+    const viewport = map.getViewport();
+
+    const handleClick = (event: MouseEvent) => {
+      if (event.button !== 0) return;
+      const coordinate = getEventCoordinate(map, event);
+      setNextPoints([...pointsRef.current, coordinate]);
+      setNextPreviewCoordinate(coordinate);
+      queueMicrotask(syncSketchFeature);
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (pointsRef.current.length === 0) return;
+      setNextPreviewCoordinate(getEventCoordinate(map, event));
+      queueMicrotask(syncSketchFeature);
+    };
+
+    const handleContextMenu = (event: MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      completeDrawing();
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        clearSketch();
+        return;
+      }
+
+      const isUndo = event.key.toLowerCase() === "z" && event.ctrlKey;
+      if (!isUndo) return;
+
+      event.preventDefault();
+      if (pointsRef.current.length > 0 && !event.shiftKey) {
+        const nextPoints = pointsRef.current.slice(0, -1);
+        setNextPoints(nextPoints);
+        setNextPreviewCoordinate(nextPoints.at(-1) ?? null);
+        queueMicrotask(syncSketchFeature);
+        return;
+      }
+
+      if (event.shiftKey) {
+        history.redo();
+        return;
+      }
+
+      history.undo();
+    };
+
+    viewport.addEventListener("click", handleClick);
+    viewport.addEventListener("pointermove", handlePointerMove);
+    viewport.addEventListener("contextmenu", handleContextMenu);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      viewport.removeEventListener("click", handleClick);
+      viewport.removeEventListener("pointermove", handlePointerMove);
+      viewport.removeEventListener("contextmenu", handleContextMenu);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [
+    active,
+    clearSketch,
+    completeDrawing,
+    history,
+    mapRef,
+    setNextPoints,
+    setNextPreviewCoordinate,
+    syncSketchFeature,
+  ]);
+
+  useEffect(() => {
+    const knownResults = knownResultsRef.current;
+
+    return () => {
+      const source = latestSourceRef.current;
+      removeFeaturesFromSource(source, [sketchFeatureRef.current]);
+      knownResults.forEach((result) => {
+        removeFeaturesFromSource(source, [
+          result.feature,
+          ...(result.attachments ?? []),
+        ]);
+      });
+    };
+  }, []);
+
+  return (
+    <>
+      <OLSXOverlay
+        id={`${id}:drawing-tooltip`}
+        coordinate={previewCoordinate}
+        visible={active && isDrawing && Boolean(previewCoordinate)}
+        positioning="bottom-center"
+        offset={[0, -16]}
+        stopEvent={false}
+        insertFirst={false}
+      >
+        <div style={FLOATING_TOOLTIP_STYLE}>
+          <div
+            style={{
+              display: "flex",
+              gap: 16,
+              justifyContent: "space-between",
+            }}
+          >
+            <span>Total</span>
+            <strong style={PRIMARY_VALUE_STYLE}>
+              {formatDrawingLength(drawingTotal)}
+            </strong>
+          </div>
+          <div style={{ color: "#d1d5db", marginTop: 6 }}>
+            Right click to finish
+          </div>
+          <div style={{ color: "#d1d5db" }}>Esc cancels drawing</div>
+          <div style={{ color: "#d1d5db" }}>Ctrl+Z removes the last point</div>
+        </div>
+      </OLSXOverlay>
+      {active &&
+        isDrawing &&
+        drawingSegments.map((segment) => (
+          <OLSXOverlay
+            key={`drawing-segment-${segment.index}`}
+            id={`${id}:drawing-segment:${segment.index}`}
+            coordinate={segment.coordinate}
+            positioning="top-center"
+            offset={[0, 10]}
+            stopEvent={false}
+            insertFirst={false}
+          >
+            <div style={SEGMENT_LABEL_STYLE}>{segment.label}</div>
+          </OLSXOverlay>
+        ))}
+      {history.results.map((result) => {
+        const resultLine = getFeatureLineString(result.feature);
+        const resultSegments = resultLine
+          ? getLineSegmentMeasurements(resultLine.getCoordinates())
+          : [];
+
+        return (
+          <Fragment key={result.id}>
+            {resultSegments.map((segment) => (
+              <OLSXOverlay
+                key={`${result.id}:segment:${segment.index}`}
+                id={`${result.id}:segment:${segment.index}`}
+                coordinate={segment.coordinate}
+                positioning="top-center"
+                offset={[0, 10]}
+                stopEvent={false}
+                insertFirst={false}
+              >
+                <div style={SEGMENT_LABEL_STYLE}>{segment.label}</div>
+              </OLSXOverlay>
+            ))}
+            <OLSXOverlay
+              key={`${result.id}:done`}
+              id={result.id}
+              coordinate={result.coordinate}
+              positioning="bottom-center"
+              offset={[0, -12]}
+              stopEvent
+              insertFirst={false}
+            >
+              <div style={DONE_TOOLTIP_STYLE}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 20,
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span>Total</span>
+                  <strong style={PRIMARY_VALUE_STYLE}>{result.label}</strong>
+                </div>
+                <button
+                  type="button"
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handleDelete(result);
+                  }}
+                  style={deleteButtonStyle}
+                >
+                  Delete
+                </button>
+              </div>
+            </OLSXOverlay>
+          </Fragment>
+        );
+      })}
+    </>
+  );
+}

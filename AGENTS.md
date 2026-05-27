@@ -42,3 +42,34 @@ Update `AI_INDEX.md` or file-level `@ai-*` comments when the change affects:
 - API/data fetching structure
 - map/GIS architecture
 - files that future agents should read first
+
+## Post-Change Documentation Check
+
+After modifying code, check whether public documentation needs to be updated.
+
+Check these files only when relevant:
+
+- `README.md`
+- `docs/api/*`
+- `docs/guides/*`
+- `docs/examples/*`
+- `docs/rules/documentation-maintenance.md`
+
+Update documentation when the change affects:
+
+- public exports
+- component props
+- hook return values
+- expected behavior
+- usage examples
+- recommended patterns
+- lifecycle behavior
+- first-time setup
+
+All Documentation should be updated by Korean.
+
+## Read Only When Explicitly Relevant
+
+- `docs/rules/documentation-maintenance.md`
+  - Use when adding, updating, auditing, or restructuring public documentation.
+  - Also use after code changes if the changed files affect public exports, usage examples, props, lifecycle behavior, recommended patterns, or README content.

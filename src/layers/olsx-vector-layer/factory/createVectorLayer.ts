@@ -9,6 +9,9 @@
  */
 
 import type { ComponentType } from "react";
+import { OLSXAreaDraw } from "../components/OLSXAreaDraw";
+import { OLSXCircleDraw } from "../components/OLSXCircleDraw";
+import { OLSXDistanceDraw } from "../components/OLSXDistanceDraw";
 import { OLSXDraw } from "../components/OLSXDraw";
 import type { OLSXDrawTooltipProps } from "../components/OLSXDrawTooltip";
 import { OLSXFeature } from "../components/OLSXFeature";
@@ -17,6 +20,9 @@ import { OLSXVectorLayer } from "../components/OLSXVectorLayer";
 import { OLSXVectorSource } from "../components/OLSXVectorSource";
 import type {
   OLSXDrawProps,
+  OLSXDistanceDrawProps,
+  OLSXAreaDrawProps,
+  OLSXCircleDrawProps,
   OLSXFeatureProps,
   OLSXFeaturesProps,
   OLSXVectorLayerProps,
@@ -32,6 +38,9 @@ export type OLSXVectorLayerCompound<
   Features: ComponentType<OLSXFeaturesProps<TTypes[number], TData>>;
   Draw: ComponentType<OLSXDrawProps> & {
     Tooltip: ComponentType<OLSXDrawTooltipProps>;
+    Distance: ComponentType<OLSXDistanceDrawProps>;
+    Area: ComponentType<OLSXAreaDrawProps>;
+    Circle: ComponentType<OLSXCircleDrawProps>;
   };
 };
 
@@ -48,8 +57,15 @@ export function defineOlsxVectorLayer<
       Features: OLSXFeatures as ComponentType<
         OLSXFeaturesProps<TTypes[number], TData>
       >,
-      Draw: OLSXDraw as ComponentType<OLSXDrawProps> & {
+      Draw: Object.assign(OLSXDraw, {
+        Distance: OLSXDistanceDraw,
+        Area: OLSXAreaDraw,
+        Circle: OLSXCircleDraw,
+      }) as ComponentType<OLSXDrawProps> & {
         Tooltip: ComponentType<OLSXDrawTooltipProps>;
+        Distance: ComponentType<OLSXDistanceDrawProps>;
+        Area: ComponentType<OLSXAreaDrawProps>;
+        Circle: ComponentType<OLSXCircleDrawProps>;
       },
     },
   ) as OLSXVectorLayerCompound<TTypes, TData>;
