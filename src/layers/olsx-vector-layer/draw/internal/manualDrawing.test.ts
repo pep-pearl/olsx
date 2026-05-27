@@ -5,8 +5,10 @@ import Point from "ol/geom/Point";
 import VectorSource from "ol/source/Vector";
 import {
   getAreaPreviewCoordinates,
+  getCompletedAreaCoordinates,
   getCompletedDistanceCoordinates,
   getCirclePreviewGeometry,
+  getCircleRadiusLineCoordinates,
   getDistancePreviewCoordinates,
   isManualDrawingCompletable,
   setDrawingIdOnFeatures,
@@ -81,10 +83,39 @@ test("area completion requires three clicked points and closes the preview polyg
   );
 });
 
+test("area completion uses clicked points instead of preview or contextmenu coordinates", () => {
+  const clicked = [
+    [0, 0],
+    [10, 0],
+    [10, 10],
+  ];
+
+  assert.deepEqual(getCompletedAreaCoordinates(clicked), [
+    [0, 0],
+    [10, 0],
+    [10, 10],
+    [0, 0],
+  ]);
+  assert.equal(
+    getCompletedAreaCoordinates(clicked).some(
+      ([x, y]) => x === 99 && y === 99,
+    ),
+    false,
+  );
+});
+
 test("circle preview needs a center and a distinct edge coordinate", () => {
   assert.equal(getCirclePreviewGeometry([0, 0], null), null);
   assert.equal(getCirclePreviewGeometry([0, 0], [0, 0]), null);
   assert.equal(getCirclePreviewGeometry([0, 0], [3, 4])?.getRadius(), 5);
+});
+
+test("circle radius line connects the center to the clicked radius point", () => {
+  assert.equal(getCircleRadiusLineCoordinates([0, 0], [0, 0]), null);
+  assert.deepEqual(getCircleRadiusLineCoordinates([0, 0], [3, 4]), [
+    [0, 0],
+    [3, 4],
+  ]);
 });
 
 test("source sync adds and removes main features and attachments by drawing id", () => {

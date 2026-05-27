@@ -57,6 +57,7 @@ export function MeasurementMap() {
 ### `DrawingToolbar`로 측정 모드 전환
 
 `Controls.DrawingToolbar`는 측정 도구 버튼 그룹을 렌더링합니다. `activeKind` / `onActiveKindChange`를 통해 현재 활성화된 측정 모드를 controlled state로 관리합니다.
+별도 command callback을 넘기지 않으면 toolbar의 undo, redo, clear button은 mounted `Draw.Distance`, `Draw.Area`, `Draw.Circle` preset의 history에 자동으로 연결됩니다.
 
 ### 측정 종류
 
@@ -66,11 +67,13 @@ export function MeasurementMap() {
 | `Draw.Area` | `"area"` | 다각형의 면적을 표시합니다 |
 | `Draw.Circle` | `"circle"` | 원의 반경을 표시합니다 |
 
+Circle mode는 첫 클릭을 center로 사용합니다. 이후 radius click마다 endpoint point, center-to-endpoint line, endpoint popup이 추가됩니다.
+
 ### 키보드 단축키
 
 | 키 | 동작 |
 |---|---|
-| 우클릭 (Right click) | 그리기 완료 |
+| 우클릭 (Right click) | 현재 그리기 종료. Distance/Area는 마지막 좌클릭 지점까지 완료하고, Circle은 preview radius를 추가하지 않고 center 작업을 종료 |
 | `Esc` | 그리기 취소 |
 | `Ctrl+Z` | 마지막 포인트 취소 (undo) |
 | `Ctrl+Shift+Z` | 취소한 포인트 복원 (redo) |

@@ -115,6 +115,18 @@ export function getAreaPreviewCoordinates(
     : [...coordinates, firstPoint];
 }
 
+export function getCompletedAreaCoordinates(points: Coordinate[]) {
+  if (points.length === 0) return [];
+
+  const coordinates = points.map((coordinate) => coordinate.slice() as Coordinate);
+  const firstPoint = coordinates[0];
+  const lastPoint = coordinates.at(-1);
+
+  return isSameDrawingCoordinate(firstPoint, lastPoint)
+    ? coordinates
+    : [...coordinates, firstPoint.slice() as Coordinate];
+}
+
 export function getCirclePreviewGeometry(
   center: Coordinate | null,
   edge: Coordinate | null,
@@ -126,6 +138,17 @@ export function getCirclePreviewGeometry(
   const dx = edge[0] - center[0];
   const dy = edge[1] - center[1];
   return new Circle(center, Math.sqrt(dx * dx + dy * dy));
+}
+
+export function getCircleRadiusLineCoordinates(
+  center: Coordinate | null,
+  edge: Coordinate | null,
+) {
+  if (!center || !edge || isSameDrawingCoordinate(center, edge)) {
+    return null;
+  }
+
+  return [center.slice() as Coordinate, edge.slice() as Coordinate];
 }
 
 export function isManualDrawingCompletable(

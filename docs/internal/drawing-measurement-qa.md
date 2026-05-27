@@ -72,9 +72,13 @@ element.remove();
 - completed drawing id는 feature, popup, vertex/center dot, history entry가 공유합니다.
 - delete, undo, redo, source synchronization은 array index가 아니라 drawing id 기준으로 동작합니다.
 - 우클릭은 항상 browser context menu를 막습니다.
-- 우클릭 completion은 contextmenu coordinate가 아니라 마지막 preview geometry를 사용합니다.
+- Distance/Area 우클릭 completion은 contextmenu coordinate나 pointer preview가 아니라 마지막 left-click point를 사용합니다.
 - `Draw.Distance`, `Draw.Area`, `Draw.Circle`은 우클릭 completion semantics를 OpenLayers `Draw`에 맡기지 않고 measurement UX를 직접 관리합니다.
 - `Draw.Circle`은 하나의 center에서 여러 radius를 만들 수 있도록 center dot을 유지합니다. 각 radius는 독립적인 popup과 delete action을 가집니다.
+- Circle 우클릭은 현재 pointer 위치의 preview radius를 완료하지 않고 center 작업을 종료합니다.
+- `Controls.DrawingToolbar`의 기본 undo/redo/clear command는 mounted measurement preset history에 연결됩니다.
+- Measurement mode는 서로 다른 primary color와 active cursor를 사용합니다.
+- Circle radius result는 circle feature, center dot, radius endpoint dot, center-to-endpoint line, endpoint-anchored popup을 함께 가집니다.
 
 ## 자동 테스트
 
@@ -88,11 +92,13 @@ npm.cmd test
 
 - overlay cleanup은 직접 DOM 제거 없이 여러 번 실행되어도 안전합니다.
 - distance completion gate는 두 개 이상의 clicked point를 요구합니다.
-- distance preview finalization은 우클릭 coordinate가 아니라 마지막 pointer preview를 사용합니다.
+- distance completion은 우클릭 coordinate나 pointer preview가 아니라 마지막 left-click point를 사용합니다.
 - area completion gate는 세 개 이상의 clicked point를 요구하고 preview polygon을 닫습니다.
+- area completion은 우클릭 coordinate나 pointer preview가 아니라 마지막 left-click point를 사용합니다.
 - circle preview는 center와 서로 다른 edge coordinate를 요구합니다.
 - source sync는 shared drawing id 기준으로 completed feature와 dot attachment를 추가/제거합니다.
 - history test는 complete/delete/undo/redo와 새 작업 후 redo stack clearing을 검증합니다.
+- command bus test는 DrawingToolbar 기본 undo/redo/clear dispatch와 aggregate enabled state를 검증합니다.
 
 ## 수동 QA 체크리스트
 
@@ -114,7 +120,7 @@ npm.cmd test
 - Distance를 활성화하고 한 번 좌클릭합니다.
 - 우클릭했을 때 completed feature가 생성되지 않는지 확인합니다.
 - Distance에서 두 개 이상의 point를 찍습니다.
-- pointer를 다른 위치로 움직인 뒤 우클릭합니다. final line이 우클릭 event 위치가 아니라 마지막 preview 위치를 사용하는지 확인합니다.
+- pointer를 다른 위치로 움직인 뒤 우클릭합니다. final line이 우클릭 event 위치나 preview 위치가 아니라 마지막 left-click 위치를 사용하는지 확인합니다.
 - completed line, 각 vertex dot, segment label, final popup이 유지되는지 확인합니다.
 - drawing 중 Ctrl+Z를 눌렀을 때 마지막 point만 제거되는지 확인합니다.
 
@@ -123,8 +129,9 @@ npm.cmd test
 - Circle을 활성화하고 center를 클릭합니다.
 - mouse를 움직였을 때 center dot, temporary circle, radius tooltip이 보이는지 확인합니다.
 - 좌클릭으로 radius 하나를 완료합니다. completed circle과 popup이 남고 같은 center가 계속 활성인지 확인합니다.
+- completed radius에 endpoint dot, center-to-endpoint line, endpoint에 anchor된 popup이 보이는지 확인합니다.
 - 다시 움직이고 좌클릭해 두 번째 독립 radius popup/delete button이 만들어지는지 확인합니다.
-- active preview 상태에서 우클릭하면 현재 preview radius가 완료되고 center sketch가 종료되는지 확인합니다.
+- active preview 상태에서 우클릭하면 현재 preview radius가 새 결과로 추가되지 않고 center sketch만 종료되는지 확인합니다.
 - center/radius sketch 중 ESC를 누르면 active sketch만 제거되는지 확인합니다.
 
 ### Area
@@ -134,3 +141,11 @@ npm.cmd test
 - 세 번째 point 이후 mouse를 움직이면 area tooltip이 나타나는지 확인합니다.
 - 세 개 미만의 clicked point에서 우클릭하면 drawing이 cancel되는지 확인합니다.
 - 세 개 이상의 clicked point에서 우클릭하면 completed polygon과 area popup이 유지되는지 확인합니다.
+- 세 개 이상의 clicked point에서 pointer를 다른 위치로 움직인 뒤 우클릭합니다. completed polygon이 preview 위치가 아니라 마지막 left-click 위치까지 닫히는지 확인합니다.
+
+### DrawingToolbar
+
+- Distance, Area, Circle 결과를 각각 하나 이상 만든 뒤 Clear drawings button을 클릭합니다.
+- completed feature, dot/line attachment, popup, active sketch가 모두 제거되는지 확인합니다.
+- 결과를 만든 뒤 Undo button이 활성화되고 마지막 작업이 제거되는지 확인합니다.
+- Undo 후 Redo button이 활성화되고 제거된 작업이 복구되는지 확인합니다.

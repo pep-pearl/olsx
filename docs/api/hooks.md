@@ -99,7 +99,7 @@ refs와 ready 상태를 함께 반환합니다. 호환성을 위해 유지되는
 
 ### `useDrawingControls(options)`
 
-`DrawingToolbar`와 같은 behavior option을 받습니다. `activeKind`, `defaultActiveKind`, `canUndo`, `canRedo`, `disabled`, command callback을 넘길 수 있고, active mode state와 command method를 반환합니다.
+`DrawingToolbar`와 같은 behavior option을 받습니다. `activeKind`, `defaultActiveKind`, `canUndo`, `canRedo`, `disabled`, command callback을 넘길 수 있고, active mode state와 command method를 반환합니다. `canUndo`, `canRedo`, command callback을 생략하면 mounted measurement preset의 command state와 undo/redo/clear 동작을 사용합니다.
 
 ### `useDrawControl()`
 

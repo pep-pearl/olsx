@@ -2,7 +2,7 @@
  * @ai-purpose Declarative component for manual polygon area drawing, measurement, and tooltips.
  * @ai-entry false
  * @ai-domain gis
- * @ai-depends mapRefsContext, vectorLayerContext, manualDrawing, measurement, OLSXOverlay, useDrawingHistory
+ * @ai-depends mapRefsContext, vectorLayerContext, drawingCommandBus, manualDrawing, measurement, OLSXOverlay, useDrawingHistory
  * @ai-used-by OLSXVectorLayer compound component
  * @ai-keywords OLSXAreaDraw, area, draw, polygon, measurement, sketch
  */
@@ -17,6 +17,10 @@ import type { StyleLike } from "ol/style/Style";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMapRefsContext } from "../../../core/model/context";
 import { OLSXOverlay } from "../../../olsx-overlay";
+import {
+  registerDrawingCommands,
+  updateDrawingCommandState,
+} from "../draw/internal/drawingCommandBus";
 import type { DrawingResult } from "../draw/internal/drawingHistory";
 import {
   createAreaDrawingResult,
@@ -26,6 +30,7 @@ import {
 import {
   createPolygonFromCoordinates,
   getAreaPreviewCoordinates,
+  getCompletedAreaCoordinates,
   isManualDrawingCompletable,
   removeFeaturesFromSource,
   setDrawingIdOnFeatures,
@@ -36,9 +41,11 @@ import { useDrawingHistory } from "../headless";
 import { useVectorLayerContext } from "../internal/vectorLayerContext";
 import {
   DONE_TOOLTIP_STYLE,
+  DRAWING_PRESET_COLORS,
   FLOATING_TOOLTIP_STYLE,
-  PRIMARY_VALUE_STYLE,
   deleteButtonStyle,
+  getDrawingPresetCursor,
+  getPrimaryValueStyle,
 } from "./drawingPresetStyles";
 
 export type OLSXAreaDrawProps = {
@@ -50,14 +57,14 @@ export type OLSXAreaDrawProps = {
 };
 
 const AREA_FEATURE_STYLE = new Style({
-  fill: new Fill({ color: "rgba(236, 0, 97, 0.18)" }),
-  stroke: new Stroke({ color: "#ec0061", width: 3 }),
+  fill: new Fill({ color: DRAWING_PRESET_COLORS.area.fill }),
+  stroke: new Stroke({ color: DRAWING_PRESET_COLORS.area.main, width: 3 }),
 });
 
 const AREA_SKETCH_STYLE = new Style({
-  fill: new Fill({ color: "rgba(236, 0, 97, 0.08)" }),
+  fill: new Fill({ color: DRAWING_PRESET_COLORS.area.sketchFill }),
   stroke: new Stroke({
-    color: "rgba(236, 0, 97, 0.48)",
+    color: DRAWING_PRESET_COLORS.area.sketch,
     width: 3,
     lineDash: [8, 8],
   }),
@@ -158,10 +165,7 @@ function AreaDrawingSession({
       return;
     }
 
-    const coordinates = getAreaPreviewCoordinates(
-      clickedPoints,
-      previewCoordinateRef.current,
-    );
+    const coordinates = getCompletedAreaCoordinates(clickedPoints);
     if (coordinates.length < 4) {
       clearSketch();
       return;
@@ -189,6 +193,12 @@ function AreaDrawingSession({
     [history, onDelete],
   );
 
+  const clearHistory = history.clear;
+  const clearAllDrawings = useCallback(() => {
+    clearSketch();
+    clearHistory();
+  }, [clearHistory, clearSketch]);
+
   useEffect(() => {
     const source = vectorSourceRef.current;
     if (!source) return;
@@ -198,6 +208,33 @@ function AreaDrawingSession({
       new Set(history.results.map((result) => result.id)),
     );
   }, [history.results, vectorSourceRef]);
+
+  useEffect(() => {
+    return registerDrawingCommands(id, {
+      kind: "area",
+      canUndo: history.canUndo,
+      canRedo: history.canRedo,
+      cancel: clearSketch,
+      undo: history.undo,
+      redo: history.redo,
+      clear: clearAllDrawings,
+    });
+  }, [
+    clearAllDrawings,
+    clearSketch,
+    history.canRedo,
+    history.canUndo,
+    history.redo,
+    history.undo,
+    id,
+  ]);
+
+  useEffect(() => {
+    updateDrawingCommandState(id, {
+      canUndo: history.canUndo,
+      canRedo: history.canRedo,
+    });
+  }, [history.canRedo, history.canUndo, history.results.length, id]);
 
   useEffect(() => {
     if (!active) return;
@@ -211,6 +248,8 @@ function AreaDrawingSession({
     const map = mapRef.current;
     if (!map || !active) return;
     const viewport = map.getViewport();
+    const previousCursor = viewport.style.cursor;
+    viewport.style.cursor = getDrawingPresetCursor("area");
 
     const handleClick = (event: MouseEvent) => {
       if (event.button !== 0) return;
@@ -269,6 +308,7 @@ function AreaDrawingSession({
       viewport.removeEventListener("pointermove", handlePointerMove);
       viewport.removeEventListener("contextmenu", handleContextMenu);
       window.removeEventListener("keydown", handleKeyDown);
+      viewport.style.cursor = previousCursor;
     };
   }, [
     active,
@@ -307,7 +347,7 @@ function AreaDrawingSession({
         <div style={FLOATING_TOOLTIP_STYLE}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
             <span>Area</span>
-            <strong style={PRIMARY_VALUE_STYLE}>
+            <strong style={getPrimaryValueStyle("area")}>
               {canShowArea ? formatDrawingArea(area) : "-"}
             </strong>
           </div>
@@ -329,7 +369,7 @@ function AreaDrawingSession({
           <div style={DONE_TOOLTIP_STYLE}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 20 }}>
               <span>Area</span>
-              <strong style={PRIMARY_VALUE_STYLE}>{result.label}</strong>
+              <strong style={getPrimaryValueStyle("area")}>{result.label}</strong>
             </div>
             <button
               type="button"

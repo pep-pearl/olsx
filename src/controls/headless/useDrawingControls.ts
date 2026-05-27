@@ -2,13 +2,18 @@
  * @ai-purpose React hook for managing drawing tool selection and history actions state without UI.
  * @ai-entry false
  * @ai-domain state
- * @ai-depends DrawingKind
+ * @ai-depends DrawingKind, drawingCommandBus
  * @ai-used-by DrawingToolbar, OLSXVectorLayer.Draw headless integrations
  * @ai-keywords useDrawingControls, setActiveKind, undo, redo, activeKind
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import type { DrawingKind } from "../../layers/olsx-vector-layer/draw/types";
+import {
+  getDrawingCommandState,
+  runDrawingCommand,
+  subscribeDrawingCommandState,
+} from "../../layers/olsx-vector-layer/draw/internal/drawingCommandBus";
 
 export type DrawingControlKind = DrawingKind;
 
@@ -44,8 +49,8 @@ export function useDrawingControls(
   const {
     activeKind,
     defaultActiveKind = null,
-    canUndo = false,
-    canRedo = false,
+    canUndo: optionCanUndo,
+    canRedo: optionCanRedo,
     disabled = false,
     onActiveKindChange,
     onCancel,
@@ -56,6 +61,13 @@ export function useDrawingControls(
   const [uncontrolledActiveKind, setUncontrolledActiveKind] =
     useState<DrawingControlKind | null>(defaultActiveKind);
   const currentActiveKind = activeKind ?? uncontrolledActiveKind;
+  const commandState = useSyncExternalStore(
+    subscribeDrawingCommandState,
+    getDrawingCommandState,
+    getDrawingCommandState,
+  );
+  const canUndo = optionCanUndo ?? commandState.canUndo;
+  const canRedo = optionCanRedo ?? commandState.canRedo;
 
   const setActiveKind = useCallback(
     (kind: DrawingControlKind | null) => {
@@ -80,22 +92,42 @@ export function useDrawingControls(
   const cancel = useCallback(() => {
     if (disabled) return;
     setActiveKind(null);
-    onCancel?.();
-  }, [disabled, onCancel, setActiveKind]);
+    if (onCancel) {
+      onCancel();
+      return;
+    }
+
+    runDrawingCommand("cancel", currentActiveKind);
+  }, [currentActiveKind, disabled, onCancel, setActiveKind]);
 
   const undo = useCallback(() => {
     if (disabled || !canUndo) return;
-    onUndo?.();
-  }, [canUndo, disabled, onUndo]);
+    if (onUndo) {
+      onUndo();
+      return;
+    }
+
+    runDrawingCommand("undo", currentActiveKind);
+  }, [canUndo, currentActiveKind, disabled, onUndo]);
 
   const redo = useCallback(() => {
     if (disabled || !canRedo) return;
-    onRedo?.();
-  }, [canRedo, disabled, onRedo]);
+    if (onRedo) {
+      onRedo();
+      return;
+    }
+
+    runDrawingCommand("redo", currentActiveKind);
+  }, [canRedo, currentActiveKind, disabled, onRedo]);
 
   const clear = useCallback(() => {
     if (disabled) return;
-    onClear?.();
+    if (onClear) {
+      onClear();
+      return;
+    }
+
+    runDrawingCommand("clear");
   }, [disabled, onClear]);
 
   return {

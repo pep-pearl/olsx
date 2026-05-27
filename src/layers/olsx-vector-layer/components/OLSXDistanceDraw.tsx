@@ -2,7 +2,7 @@
  * @ai-purpose Declarative component for manual linestring distance drawing, measurement, and tooltips.
  * @ai-entry false
  * @ai-domain gis
- * @ai-depends mapRefsContext, vectorLayerContext, manualDrawing, measurement, OLSXOverlay, useDrawingHistory
+ * @ai-depends mapRefsContext, vectorLayerContext, drawingCommandBus, manualDrawing, measurement, OLSXOverlay, useDrawingHistory
  * @ai-used-by OLSXVectorLayer compound component
  * @ai-keywords OLSXDistanceDraw, distance, draw, linestring, measurement, sketch
  */
@@ -26,6 +26,10 @@ import {
 } from "react";
 import { useMapRefsContext } from "../../../core/model/context";
 import { OLSXOverlay } from "../../../olsx-overlay";
+import {
+  registerDrawingCommands,
+  updateDrawingCommandState,
+} from "../draw/internal/drawingCommandBus";
 import type { DrawingResult } from "../draw/internal/drawingHistory";
 import {
   createLineStringFromCoordinates,
@@ -47,10 +51,12 @@ import { useDrawingHistory } from "../headless";
 import { useVectorLayerContext } from "../internal/vectorLayerContext";
 import {
   DONE_TOOLTIP_STYLE,
+  DRAWING_PRESET_COLORS,
   FLOATING_TOOLTIP_STYLE,
-  PRIMARY_VALUE_STYLE,
   SEGMENT_LABEL_STYLE,
   deleteButtonStyle,
+  getDrawingPresetCursor,
+  getPrimaryValueStyle,
 } from "./drawingPresetStyles";
 
 export type OLSXDistanceDrawProps = {
@@ -62,24 +68,24 @@ export type OLSXDistanceDrawProps = {
 };
 
 const DISTANCE_FEATURE_STYLE = new Style({
-  stroke: new Stroke({ color: "#ec0061", width: 4 }),
+  stroke: new Stroke({ color: DRAWING_PRESET_COLORS.distance.main, width: 4 }),
   image: new CircleStyle({
     radius: 5,
     fill: new Fill({ color: "#ffffff" }),
-    stroke: new Stroke({ color: "#ec0061", width: 3 }),
+    stroke: new Stroke({ color: DRAWING_PRESET_COLORS.distance.main, width: 3 }),
   }),
 });
 
 const DISTANCE_SKETCH_STYLE = new Style({
   stroke: new Stroke({
-    color: "rgba(236, 0, 97, 0.45)",
+    color: DRAWING_PRESET_COLORS.distance.sketch,
     width: 4,
     lineDash: [8, 8],
   }),
   image: new CircleStyle({
     radius: 5,
     fill: new Fill({ color: "rgba(255, 255, 255, 0.7)" }),
-    stroke: new Stroke({ color: "rgba(236, 0, 97, 0.55)", width: 3 }),
+    stroke: new Stroke({ color: DRAWING_PRESET_COLORS.distance.sketch, width: 3 }),
   }),
 });
 
@@ -87,7 +93,7 @@ const DISTANCE_DOT_STYLE = new Style({
   image: new CircleStyle({
     radius: 5,
     fill: new Fill({ color: "#ffffff" }),
-    stroke: new Stroke({ color: "#ec0061", width: 3 }),
+    stroke: new Stroke({ color: DRAWING_PRESET_COLORS.distance.main, width: 3 }),
   }),
 });
 
@@ -228,6 +234,12 @@ export function OLSXDistanceDraw({
     [history, onDelete],
   );
 
+  const clearHistory = history.clear;
+  const clearAllDrawings = useCallback(() => {
+    clearSketch();
+    clearHistory();
+  }, [clearHistory, clearSketch]);
+
   useEffect(() => {
     const source = vectorSourceRef.current;
     if (!source) return;
@@ -238,6 +250,33 @@ export function OLSXDistanceDraw({
       new Set(history.results.map((result) => result.id)),
     );
   }, [history.results, vectorSourceRef]);
+
+  useEffect(() => {
+    return registerDrawingCommands(id, {
+      kind: "distance",
+      canUndo: history.canUndo,
+      canRedo: history.canRedo,
+      cancel: clearSketch,
+      undo: history.undo,
+      redo: history.redo,
+      clear: clearAllDrawings,
+    });
+  }, [
+    clearAllDrawings,
+    clearSketch,
+    history.canRedo,
+    history.canUndo,
+    history.redo,
+    history.undo,
+    id,
+  ]);
+
+  useEffect(() => {
+    updateDrawingCommandState(id, {
+      canUndo: history.canUndo,
+      canRedo: history.canRedo,
+    });
+  }, [history.canRedo, history.canUndo, history.results.length, id]);
 
   useEffect(() => {
     if (!active) return;
@@ -251,6 +290,8 @@ export function OLSXDistanceDraw({
     const map = mapRef.current;
     if (!map || !active) return;
     const viewport = map.getViewport();
+    const previousCursor = viewport.style.cursor;
+    viewport.style.cursor = getDrawingPresetCursor("distance");
 
     const handleClick = (event: MouseEvent) => {
       if (event.button !== 0) return;
@@ -309,6 +350,7 @@ export function OLSXDistanceDraw({
       viewport.removeEventListener("pointermove", handlePointerMove);
       viewport.removeEventListener("contextmenu", handleContextMenu);
       window.removeEventListener("keydown", handleKeyDown);
+      viewport.style.cursor = previousCursor;
     };
   }, [
     active,
@@ -356,7 +398,7 @@ export function OLSXDistanceDraw({
             }}
           >
             <span>Total</span>
-            <strong style={PRIMARY_VALUE_STYLE}>
+            <strong style={getPrimaryValueStyle("distance")}>
               {formatDrawingLength(drawingTotal)}
             </strong>
           </div>
@@ -379,7 +421,14 @@ export function OLSXDistanceDraw({
             stopEvent={false}
             insertFirst={false}
           >
-            <div style={SEGMENT_LABEL_STYLE}>{segment.label}</div>
+            <div
+              style={{
+                ...SEGMENT_LABEL_STYLE,
+                color: DRAWING_PRESET_COLORS.distance.main,
+              }}
+            >
+              {segment.label}
+            </div>
           </OLSXOverlay>
         ))}
       {history.results.map((result) => {
@@ -400,7 +449,14 @@ export function OLSXDistanceDraw({
                 stopEvent={false}
                 insertFirst={false}
               >
-                <div style={SEGMENT_LABEL_STYLE}>{segment.label}</div>
+                <div
+                  style={{
+                    ...SEGMENT_LABEL_STYLE,
+                    color: DRAWING_PRESET_COLORS.distance.main,
+                  }}
+                >
+                  {segment.label}
+                </div>
               </OLSXOverlay>
             ))}
             <OLSXOverlay
@@ -421,7 +477,7 @@ export function OLSXDistanceDraw({
                   }}
                 >
                   <span>Total</span>
-                  <strong style={PRIMARY_VALUE_STYLE}>{result.label}</strong>
+                  <strong style={getPrimaryValueStyle("distance")}>{result.label}</strong>
                 </div>
                 <button
                   type="button"

@@ -2,7 +2,7 @@
  * @ai-purpose Declarative component for manual circle radius drawing, measurement, and tooltips.
  * @ai-entry false
  * @ai-domain gis
- * @ai-depends mapRefsContext, vectorLayerContext, manualDrawing, measurement, OLSXOverlay, useDrawingHistory
+ * @ai-depends mapRefsContext, vectorLayerContext, drawingCommandBus, manualDrawing, measurement, OLSXOverlay, useDrawingHistory
  * @ai-used-by OLSXVectorLayer compound component
  * @ai-keywords OLSXCircleDraw, circle, draw, radius, measurement, sketch
  */
@@ -10,6 +10,7 @@
 import Feature from "ol/Feature";
 import type { Coordinate } from "ol/coordinate";
 import Circle from "ol/geom/Circle";
+import LineString from "ol/geom/LineString";
 import Point from "ol/geom/Point";
 import type OlVectorSource from "ol/source/Vector";
 import { Fill, Stroke, Style } from "ol/style";
@@ -19,6 +20,10 @@ import type { StyleLike } from "ol/style/Style";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMapRefsContext } from "../../../core/model/context";
 import { OLSXOverlay } from "../../../olsx-overlay";
+import {
+  registerDrawingCommands,
+  updateDrawingCommandState,
+} from "../draw/internal/drawingCommandBus";
 import type { DrawingResult } from "../draw/internal/drawingHistory";
 import {
   createCircleDrawingResult,
@@ -27,6 +32,7 @@ import {
 } from "../draw/internal/measurement";
 import {
   getCirclePreviewGeometry,
+  getCircleRadiusLineCoordinates,
   removeFeaturesFromSource,
   setDrawingIdOnFeatures,
   syncDrawingResultsToSource,
@@ -36,9 +42,11 @@ import { useDrawingHistory } from "../headless";
 import { useVectorLayerContext } from "../internal/vectorLayerContext";
 import {
   DONE_TOOLTIP_STYLE,
+  DRAWING_PRESET_COLORS,
   FLOATING_TOOLTIP_STYLE,
-  PRIMARY_VALUE_STYLE,
   deleteButtonStyle,
+  getDrawingPresetCursor,
+  getPrimaryValueStyle,
 } from "./drawingPresetStyles";
 
 export type OLSXCircleDrawProps = {
@@ -50,14 +58,14 @@ export type OLSXCircleDrawProps = {
 };
 
 const CIRCLE_FEATURE_STYLE = new Style({
-  fill: new Fill({ color: "rgba(236, 0, 97, 0.14)" }),
-  stroke: new Stroke({ color: "#ec0061", width: 3 }),
+  fill: new Fill({ color: DRAWING_PRESET_COLORS.circle.fill }),
+  stroke: new Stroke({ color: DRAWING_PRESET_COLORS.circle.main, width: 3 }),
 });
 
 const CIRCLE_SKETCH_STYLE = new Style({
-  fill: new Fill({ color: "rgba(236, 0, 97, 0.06)" }),
+  fill: new Fill({ color: DRAWING_PRESET_COLORS.circle.sketchFill }),
   stroke: new Stroke({
-    color: "rgba(236, 0, 97, 0.48)",
+    color: DRAWING_PRESET_COLORS.circle.sketch,
     width: 3,
     lineDash: [8, 8],
   }),
@@ -67,7 +75,30 @@ const CIRCLE_CENTER_DOT_STYLE = new Style({
   image: new CircleStyle({
     radius: 5,
     fill: new Fill({ color: "#ffffff" }),
-    stroke: new Stroke({ color: "#ec0061", width: 3 }),
+    stroke: new Stroke({ color: DRAWING_PRESET_COLORS.circle.main, width: 3 }),
+  }),
+});
+
+const CIRCLE_RADIUS_POINT_STYLE = new Style({
+  image: new CircleStyle({
+    radius: 5,
+    fill: new Fill({ color: "#ffffff" }),
+    stroke: new Stroke({ color: DRAWING_PRESET_COLORS.circle.main, width: 3 }),
+  }),
+});
+
+const CIRCLE_RADIUS_LINE_STYLE = new Style({
+  stroke: new Stroke({
+    color: DRAWING_PRESET_COLORS.circle.main,
+    width: 3,
+  }),
+});
+
+const CIRCLE_RADIUS_LINE_SKETCH_STYLE = new Style({
+  stroke: new Stroke({
+    color: DRAWING_PRESET_COLORS.circle.sketch,
+    width: 3,
+    lineDash: [8, 8],
   }),
 });
 
@@ -96,6 +127,8 @@ function CircleDrawingSession({
   const edgeRef = useRef<Coordinate | null>(null);
   const sketchFeatureRef = useRef<Feature<Circle> | null>(null);
   const centerDotRef = useRef<Feature<Point> | null>(null);
+  const radiusLineRef = useRef<Feature<LineString> | null>(null);
+  const radiusPointRef = useRef<Feature<Point> | null>(null);
   const [center, setCenter] = useState<Coordinate | null>(null);
   const [edge, setEdge] = useState<Coordinate | null>(null);
 
@@ -121,8 +154,14 @@ function CircleDrawingSession({
   const clearSketch = useCallback(
     (clearCenter = true) => {
       const source = vectorSourceRef.current;
-      removeFeaturesFromSource(source, [sketchFeatureRef.current]);
+      removeFeaturesFromSource(source, [
+        sketchFeatureRef.current,
+        radiusLineRef.current,
+        radiusPointRef.current,
+      ]);
       sketchFeatureRef.current = null;
+      radiusLineRef.current = null;
+      radiusPointRef.current = null;
       if (clearCenter) {
         removeFeaturesFromSource(source, [centerDotRef.current]);
         centerDotRef.current = null;
@@ -154,9 +193,19 @@ function CircleDrawingSession({
 
     syncCenterDot();
     const geometry = getCirclePreviewGeometry(centerRef.current, edgeRef.current);
+    const radiusLineCoordinates = getCircleRadiusLineCoordinates(
+      centerRef.current,
+      edgeRef.current,
+    );
     if (!geometry) {
-      removeFeaturesFromSource(source, [sketchFeatureRef.current]);
+      removeFeaturesFromSource(source, [
+        sketchFeatureRef.current,
+        radiusLineRef.current,
+        radiusPointRef.current,
+      ]);
       sketchFeatureRef.current = null;
+      radiusLineRef.current = null;
+      radiusPointRef.current = null;
       return;
     }
 
@@ -164,17 +213,40 @@ function CircleDrawingSession({
       sketchFeatureRef.current = new Feature(geometry);
       sketchFeatureRef.current.setStyle(CIRCLE_SKETCH_STYLE);
       source.addFeature(sketchFeatureRef.current);
-      return;
+    } else {
+      sketchFeatureRef.current.setGeometry(geometry);
     }
 
-    sketchFeatureRef.current.setGeometry(geometry);
+    if (radiusLineCoordinates) {
+      const radiusLine = new LineString(radiusLineCoordinates);
+      if (!radiusLineRef.current) {
+        radiusLineRef.current = new Feature(radiusLine);
+        radiusLineRef.current.setStyle(CIRCLE_RADIUS_LINE_SKETCH_STYLE);
+        source.addFeature(radiusLineRef.current);
+      } else {
+        radiusLineRef.current.setGeometry(radiusLine);
+      }
+
+      const radiusPoint = new Point(radiusLineCoordinates[1]);
+      if (!radiusPointRef.current) {
+        radiusPointRef.current = new Feature(radiusPoint);
+        radiusPointRef.current.setStyle(CIRCLE_RADIUS_POINT_STYLE);
+        source.addFeature(radiusPointRef.current);
+      } else {
+        radiusPointRef.current.setGeometry(radiusPoint);
+      }
+    }
   }, [syncCenterDot, vectorSourceRef]);
 
   const completeCurrentRadius = useCallback(
     (keepCenter: boolean) => {
       const source = vectorSourceRef.current;
       const geometry = getCirclePreviewGeometry(centerRef.current, edgeRef.current);
-      if (!source || !geometry) {
+      const radiusLineCoordinates = getCircleRadiusLineCoordinates(
+        centerRef.current,
+        edgeRef.current,
+      );
+      if (!source || !geometry || !radiusLineCoordinates) {
         clearSketch(!keepCenter);
         return;
       }
@@ -187,7 +259,12 @@ function CircleDrawingSession({
       }) as FeatureDrawingResult;
       const centerDot = new Feature(new Point(geometry.getCenter()));
       centerDot.setStyle(CIRCLE_CENTER_DOT_STYLE);
-      result.attachments = [centerDot];
+      const radiusLine = new Feature(new LineString(radiusLineCoordinates));
+      radiusLine.setStyle(CIRCLE_RADIUS_LINE_STYLE);
+      const radiusPoint = new Feature(new Point(radiusLineCoordinates[1]));
+      radiusPoint.setStyle(CIRCLE_RADIUS_POINT_STYLE);
+      result.coordinate = radiusLineCoordinates[1].slice() as Coordinate;
+      result.attachments = [centerDot, radiusLine, radiusPoint];
 
       setDrawingIdOnFeatures(result);
       knownResultsRef.current.set(result.id, result);
@@ -207,6 +284,12 @@ function CircleDrawingSession({
     [history, onDelete],
   );
 
+  const clearHistory = history.clear;
+  const clearAllDrawings = useCallback(() => {
+    clearSketch(true);
+    clearHistory();
+  }, [clearHistory, clearSketch]);
+
   useEffect(() => {
     const source = vectorSourceRef.current;
     if (!source) return;
@@ -216,6 +299,33 @@ function CircleDrawingSession({
       new Set(history.results.map((result) => result.id)),
     );
   }, [history.results, vectorSourceRef]);
+
+  useEffect(() => {
+    return registerDrawingCommands(id, {
+      kind: "circle",
+      canUndo: history.canUndo,
+      canRedo: history.canRedo,
+      cancel: () => clearSketch(true),
+      undo: history.undo,
+      redo: history.redo,
+      clear: clearAllDrawings,
+    });
+  }, [
+    clearAllDrawings,
+    clearSketch,
+    history.canRedo,
+    history.canUndo,
+    history.redo,
+    history.undo,
+    id,
+  ]);
+
+  useEffect(() => {
+    updateDrawingCommandState(id, {
+      canUndo: history.canUndo,
+      canRedo: history.canRedo,
+    });
+  }, [history.canRedo, history.canUndo, history.results.length, id]);
 
   useEffect(() => {
     if (!active) return;
@@ -229,6 +339,8 @@ function CircleDrawingSession({
     const map = mapRef.current;
     if (!map || !active) return;
     const viewport = map.getViewport();
+    const previousCursor = viewport.style.cursor;
+    viewport.style.cursor = getDrawingPresetCursor("circle");
 
     const handleClick = (event: MouseEvent) => {
       if (event.button !== 0) return;
@@ -253,7 +365,7 @@ function CircleDrawingSession({
     const handleContextMenu = (event: MouseEvent) => {
       event.preventDefault();
       event.stopPropagation();
-      completeCurrentRadius(false);
+      clearSketch(true);
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -290,6 +402,7 @@ function CircleDrawingSession({
       viewport.removeEventListener("pointermove", handlePointerMove);
       viewport.removeEventListener("contextmenu", handleContextMenu);
       window.removeEventListener("keydown", handleKeyDown);
+      viewport.style.cursor = previousCursor;
     };
   }, [
     active,
@@ -307,7 +420,12 @@ function CircleDrawingSession({
 
     return () => {
       const source = latestSourceRef.current;
-      removeFeaturesFromSource(source, [sketchFeatureRef.current, centerDotRef.current]);
+      removeFeaturesFromSource(source, [
+        sketchFeatureRef.current,
+        centerDotRef.current,
+        radiusLineRef.current,
+        radiusPointRef.current,
+      ]);
       knownResults.forEach((result) => {
         removeFeaturesFromSource(source, [result.feature, ...(result.attachments ?? [])]);
       });
@@ -328,7 +446,7 @@ function CircleDrawingSession({
         <div style={FLOATING_TOOLTIP_STYLE}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
             <span>Radius</span>
-            <strong style={PRIMARY_VALUE_STYLE}>
+            <strong style={getPrimaryValueStyle("circle")}>
               {radius > 0 ? formatDrawingMeters(radius) : "-"}
             </strong>
           </div>
@@ -352,7 +470,7 @@ function CircleDrawingSession({
           <div style={DONE_TOOLTIP_STYLE}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 20 }}>
               <span>Radius</span>
-              <strong style={PRIMARY_VALUE_STYLE}>{result.label}</strong>
+              <strong style={getPrimaryValueStyle("circle")}>{result.label}</strong>
             </div>
             <button
               type="button"

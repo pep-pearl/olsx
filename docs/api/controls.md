@@ -75,8 +75,8 @@ export function MapControls() {
 | --- | --- | --- | --- | --- |
 | `activeKind` | `"distance" \| "area" \| "circle" \| null` | - | internal state | controlled active drawing mode입니다. |
 | `defaultActiveKind` | `"distance" \| "area" \| "circle" \| null` | - | `null` | uncontrolled 사용 시 초기 drawing mode입니다. |
-| `canUndo` | `boolean` | - | `false` | undo button을 활성화합니다. |
-| `canRedo` | `boolean` | - | `false` | redo button을 활성화합니다. |
+| `canUndo` | `boolean` | - | mounted measurement state | undo button을 활성화합니다. 제공하면 기본 measurement command state보다 우선합니다. |
+| `canRedo` | `boolean` | - | mounted measurement state | redo button을 활성화합니다. 제공하면 기본 measurement command state보다 우선합니다. |
 | `disabled` | `boolean` | - | `false` | toolbar command를 비활성화합니다. |
 | `onActiveKindChange` | `(kind) => void` | - | - | drawing mode가 바뀔 때 호출됩니다. |
 | `onCancel` | `() => void` | - | - | cancel button 클릭 시 호출됩니다. |
@@ -94,6 +94,7 @@ export function MapControls() {
 - `Controls.Zoom`은 현재 view zoom을 읽고 zoom 변경을 animation으로 적용합니다.
 - `Controls.BaseLayerToggle`은 mounted `BaseLayer`가 필요하며, `street`과 `satellite`를 전환합니다.
 - `Controls.DrawingToolbar`는 drawing mode 선택과 command callback을 관리합니다. 실제 측정 drawing은 `OLSXVectorLayer.Draw.Distance`, `Area`, `Circle`에서 수행합니다.
+- `onUndo`, `onRedo`, `onClear`를 제공하지 않으면 mounted measurement preset의 history를 사용합니다. `clear`는 화면에 남은 Distance, Area, Circle completed feature, attachment, popup과 active sketch를 모두 제거합니다.
 - 기본 control component는 필요한 map context가 준비되기 전까지 `null`을 반환합니다.
 
 ## 참고

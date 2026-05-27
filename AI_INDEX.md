@@ -87,6 +87,7 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/layers/olsx-vector-layer/draw/types.ts`
 - `src/layers/olsx-vector-layer/draw/internal/measurement.ts`
 - `src/layers/olsx-vector-layer/draw/internal/drawingHistory.ts`
+- `src/layers/olsx-vector-layer/draw/internal/drawingCommandBus.ts`
 - `src/layers/olsx-vector-layer/draw/internal/manualDrawing.ts`
 - `src/layers/olsx-vector-layer/headless/useDrawControl.ts`
 - `src/layers/olsx-vector-layer/headless/useDrawingHistory.ts`
@@ -148,13 +149,13 @@ Use it to decide which files to read before opening large parts of the repositor
 - `useMountLayer` is the shared lifecycle hook for OpenLayers layer components and delegates add/remove/registry cleanup to `src/core/internal/layerLifecycle.ts`; check it before adding another layer wrapper.
 - `OLSXTileLayer` is the generic public tile-layer wrapper. `BaseLayer` remains the opinionated street/satellite preset.
 - Controls are split between `src/controls/default/` ready-to-use UI and `src/controls/headless/` hooks for custom UI.
-- Drawing controls follow that same split: `DrawingToolbar` is the default button UI, while `useDrawingControls` owns mode/cancel/undo/redo/clear command wiring for custom toolbars.
+- Drawing controls follow that same split: `DrawingToolbar` is the default button UI, while `useDrawingControls` owns mode/cancel/undo/redo/clear command wiring for custom toolbars. If callbacks are omitted, it dispatches through `draw/internal/drawingCommandBus.ts` to mounted measurement presets.
 - `OLSXVectorLayer` is the default compound vector API. `createVectorLayer` returns a typed compound component for user-defined feature types/data.
 - `Features` uses id-based diff/upsert in `featuresDiff.ts` so data changes add, remove, or update only the affected OpenLayers features.
 - Feature click/hover handlers register map events through `src/core/listeners/listenerRegistry.ts` rather than directly attaching unmanaged feature-local listeners.
 - `OLSXVectorLayer.Draw` accepts `id` and `active`; event listener keys use `buildDrawListenerKey(drawId, eventType)`. `OLSXVectorLayer.Draw.Tooltip` follows the pointer during active drawing. `useDrawControl` is the headless hook for custom draw-state UI inside a Draw subtree.
 - `OLSXVectorLayer.Draw.Distance`, `Draw.Area`, and `Draw.Circle` are the default measurement presets. They manage measurement sketch/completed features directly so right-click completion, dots, popups, delete, and undo/redo share one drawing id and stay separate from generic OpenLayers `Draw` interaction lifecycle.
-- Measurement drawing presets should reuse `draw/internal/measurement.ts`, `draw/internal/drawingHistory.ts`, `draw/internal/manualDrawing.ts`, and `useDrawingHistory` instead of duplicating distance/area/circle completion, source sync, and undo/redo bookkeeping.
+- Measurement drawing presets should reuse `draw/internal/measurement.ts`, `draw/internal/drawingHistory.ts`, `draw/internal/drawingCommandBus.ts`, `draw/internal/manualDrawing.ts`, and `useDrawingHistory` instead of duplicating distance/area/circle completion, source sync, toolbar command dispatch, and undo/redo bookkeeping.
 - `OLSXOverlay` mounts React children into an OpenLayers `Overlay` via a React portal; use it for popups, labels, callouts, and map-anchored UI.
 - OpenLayers object lifecycle is intentionally kept in React components/hooks rather than hidden behind a closed abstraction.
 - `AGENTS.md` and `docs/rules/context-navigation.md` define how future agents should choose files.

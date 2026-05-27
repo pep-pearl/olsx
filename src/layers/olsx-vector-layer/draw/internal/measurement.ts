@@ -1,10 +1,10 @@
-import type { DrawingKind } from "../types";
 import type Feature from "ol/Feature";
 import type { Coordinate } from "ol/coordinate";
 import Circle from "ol/geom/Circle";
 import LineString from "ol/geom/LineString";
 import Polygon from "ol/geom/Polygon";
 import { getArea, getLength } from "ol/sphere";
+import type { DrawingKind } from "../types";
 import type { DrawingResult } from "./drawingHistory";
 
 const MINIMUM_POINTS_BY_KIND: Record<DrawingKind, number> = {
@@ -13,9 +13,13 @@ const MINIMUM_POINTS_BY_KIND: Record<DrawingKind, number> = {
   circle: 2,
 };
 
-function formatScaledValue(value: number) {
+function formatScaledValue(value: number, comma = true) {
   const rounded = Math.round(value * 100) / 100;
-  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+  if (!comma) return String(rounded);
+  return rounded.toLocaleString("ko-KR", {
+    minimumFractionDigits: 0, // 소수점이 없으면 굳이 .00을 붙이지 않음
+    maximumFractionDigits: 2, // 소수점은 최대 2자리까지만 표시
+  });
 }
 
 function getMidpoint(start: Coordinate, end: Coordinate): Coordinate {
@@ -66,10 +70,10 @@ export function getLineSegmentMeasurements(coordinates: Coordinate[]) {
 
 export function formatDrawingArea(squareMeters: number) {
   if (squareMeters < 1000000) {
-    return `${Math.round(squareMeters)} m2`;
+    return `${Math.round(squareMeters).toLocaleString("ko-KR")} m²`;
   }
 
-  return `${formatScaledValue(squareMeters / 1000000)} km2`;
+  return `${formatScaledValue(squareMeters / 1000000)} km²`;
 }
 
 export function getDrawingMinimumPoints(kind: DrawingKind) {
@@ -116,7 +120,9 @@ export function createDistanceDrawingResult({
   const coordinate = getLastCoordinateFromLineString(geometry);
 
   if (!coordinate) {
-    throw new Error("Distance drawing result requires at least one coordinate.");
+    throw new Error(
+      "Distance drawing result requires at least one coordinate.",
+    );
   }
 
   return {

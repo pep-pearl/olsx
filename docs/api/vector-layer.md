@@ -146,6 +146,8 @@ export function VectorMap() {
 - feature click/hover handler는 map-level listener registry에 등록되어 unmount 시 id 기반으로 cleanup됩니다.
 - `Draw`는 OpenLayers `Draw` interaction 하나를 만들고, `active` 변경 시 `draw.setActive(active)`만 호출합니다.
 - 측정 preset은 result popup, delete, undo/redo, source cleanup을 하나의 drawing id 단위로 관리합니다.
+- Distance/Area 우클릭 완료는 pointer preview나 contextmenu coordinate를 최종 point로 추가하지 않고 마지막 left-click point를 기준으로 완료합니다. Circle 우클릭은 현재 preview radius를 추가하지 않고 center 작업을 종료합니다.
+- 측정 preset은 mode별 primary color와 active cursor를 적용합니다. Circle 측정은 center point, radius endpoint point, center-to-endpoint line을 유지하고 popup을 endpoint에 고정합니다.
 
 ## 참고
 

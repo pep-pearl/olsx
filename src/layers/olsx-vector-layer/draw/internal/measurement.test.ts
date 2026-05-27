@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import Feature from "ol/Feature";
+import Circle from "ol/geom/Circle";
+import LineString from "ol/geom/LineString";
+import Polygon from "ol/geom/Polygon";
 import {
   createAreaDrawingResult,
   createCircleDrawingResult,
@@ -10,10 +14,6 @@ import {
   getLineSegmentMeasurements,
   isDrawingCompletable,
 } from "./measurement";
-import Feature from "ol/Feature";
-import Circle from "ol/geom/Circle";
-import LineString from "ol/geom/LineString";
-import Polygon from "ol/geom/Polygon";
 
 test("formatDrawingLength keeps short distances in meters", () => {
   assert.equal(formatDrawingLength(52.4), "52 m");
@@ -28,8 +28,8 @@ test("formatDrawingLength formats long distances in kilometers", () => {
 });
 
 test("formatDrawingArea formats square meters and square kilometers", () => {
-  assert.equal(formatDrawingArea(900), "900 m2");
-  assert.equal(formatDrawingArea(1250000), "1.25 km2");
+  assert.equal(formatDrawingArea(900), "900 m²");
+  assert.equal(formatDrawingArea(1250000), "1.25 km²");
 });
 
 test("isDrawingCompletable follows minimum points by drawing kind", () => {
@@ -90,7 +90,7 @@ test("createAreaDrawingResult creates an area result at the polygon interior", (
 
   assert.equal(result.id, "area-1");
   assert.equal(result.kind, "area");
-  assert.equal(result.label.endsWith("m2"), true);
+  assert.equal(result.label.endsWith("m²"), true);
   assert.equal(result.coordinate.length, 2);
 });
 
