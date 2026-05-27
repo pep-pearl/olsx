@@ -8,12 +8,12 @@
  */
 
 import { useCallback, useState, useSyncExternalStore } from "react";
-import type { DrawingKind } from "../../layers/olsx-vector-layer/draw/types";
 import {
   getDrawingCommandState,
   runDrawingCommand,
   subscribeDrawingCommandState,
 } from "../../layers/olsx-vector-layer/draw/internal/drawingCommandBus";
+import type { DrawingKind } from "../../layers/olsx-vector-layer/draw/types";
 
 export type DrawingControlKind = DrawingKind;
 

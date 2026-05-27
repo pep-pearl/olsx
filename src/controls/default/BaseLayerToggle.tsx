@@ -4,7 +4,6 @@ import {
   type BaseLayerControl,
 } from "../headless";
 import { SatelliteIcon, StreetIcon } from "./icons";
-import { standaloneControlButtonStyle } from "./styles";
 
 export type BaseLayerToggleProps = {
   className?: string;
@@ -29,11 +28,13 @@ export function BaseLayerToggle({
     return children;
   }
 
+  const combinedClassName = `olsx-control-button-standalone olsx-baselayer-toggle ${className ?? ""}`.trim();
+
   return (
     <button
-      className={className ?? ""}
+      className={combinedClassName}
       aria-label="Toggle Base Layer"
-      style={style ?? standaloneControlButtonStyle}
+      style={style}
       onClick={control.toggle}
       type="button"
     >

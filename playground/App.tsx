@@ -16,6 +16,7 @@ import {
   OLSXOverlayRef,
   OLSXVectorLayer,
 } from "../src";
+import "../src/styles.css";
 
 const types = ["type1", "type2"] as const;
 

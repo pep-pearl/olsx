@@ -1,0 +1,90 @@
+/**
+ * @ai-purpose Vanilla CSS Preset styling for OLSX Map default UI controls.
+ * @ai-entry true
+ * @ai-domain ui-styles
+ * @ai-used-by Consumers importing "olsx/styles.css" for default UI look and feel.
+ */
+
+.olsx-controls {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  gap: 8px;
+  z-index: 1000;
+}
+
+.olsx-control-group {
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  padding: 0;
+  margin: 0;
+  border: 1px solid #e5e7eb;
+  box-sizing: border-box;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.8); /* #ffffffcc */
+  overflow: hidden;
+}
+
+.olsx-control-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  box-sizing: border-box;
+  color: #111827;
+  background-color: transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.olsx-control-button:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.olsx-control-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.olsx-control-button-standalone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  box-sizing: border-box;
+  color: #111827;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.8); /* #ffffffcc */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.olsx-control-button-standalone:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.olsx-control-button-standalone:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Active or toggled state for drawing buttons */
+.olsx-control-button.olsx-active {
+  background-color: rgba(37, 99, 235, 0.14);
+  color: #1d4ed8;
+}
+
+/* Border separator for vertical button groups, like zoom control */
+.olsx-zoom-out {
+  border-top: 1px solid #e5e7eb;
+}

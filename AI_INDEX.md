@@ -29,7 +29,7 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/layers/olsx-vector-layer/` contains the vector layer compound API. Public JSX components live in `components/`, implementation hooks/context live in `internal/`, the typed layer factory lives in `factory/`, and the per-source feature registry contract lives in `registry/`.
 - `src/olsx-overlay/` contains the React portal wrapper for OpenLayers overlays.
 - `src/presets/base-layer/` is the built-in replaceable base-map preset for street/satellite tile layers.
-- `src/controls/` contains default UI controls and headless control hooks. Default components live in `default/`; custom UI hooks live in `headless/`.
+- `src/controls/` contains default UI controls and headless control hooks. Default components live in `default/`; custom UI hooks live in `headless/`. The global CSS preset is located at `src/styles.css`.
 - `src/layers/olsx-vector-layer/draw/` contains shared drawing primitives for measurement presets. Public drawing types live in `draw/types.ts`; pure measurement/history/manual-sketch helpers live under `draw/internal/`.
 - `docs/getting-started/`, `docs/api/`, `docs/guides/`, and `docs/examples/` contain the official public documentation. `README.md` is the documentation entrypoint. Public docs are Korean-first and include hidden `@ai-purpose`, `@ai-doc-kind`, `@ai-keywords`, and `@ai-related` comments for AI routing.
 - `playground/` is the Vite demo app used for local manual validation.
@@ -117,7 +117,7 @@ Use it to decide which files to read before opening large parts of the repositor
 - `src/controls/default/BaseLayerToggle.tsx`
 - `src/controls/default/DrawingToolbar.tsx`
 - `src/controls/default/icons.tsx`
-- `src/controls/default/styles.ts`
+- `src/styles.css`
 - `src/controls/headless/useZoomControl.ts`
 - `src/controls/headless/useBaseLayerControl.ts`
 - `src/controls/headless/useDrawingControls.ts`

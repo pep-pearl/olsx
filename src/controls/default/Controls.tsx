@@ -1,5 +1,4 @@
 import { BaseLayerToggle } from "./BaseLayerToggle";
-import { controlsStyle } from "./styles";
 import { ZoomControl } from "./ZoomControl";
 import { DrawingToolbar } from "./DrawingToolbar";
 
@@ -10,8 +9,9 @@ type ControlsProps = {
 };
 
 function ControlsRoot({ className, style, children }: ControlsProps) {
+  const combinedClassName = `olsx-controls ${className ?? ""}`.trim();
   return (
-    <div className={className} style={style ?? controlsStyle}>
+    <div className={combinedClassName} style={style}>
       {children}
     </div>
   );

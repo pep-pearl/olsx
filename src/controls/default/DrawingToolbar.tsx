@@ -10,9 +10,9 @@
 import type { CSSProperties, ReactNode } from "react";
 import {
   useDrawingControls,
+  type DrawingControlKind,
   type DrawingControls,
   type DrawingControlsOptions,
-  type DrawingControlKind,
 } from "../headless";
 import {
   AreaIcon,
@@ -23,20 +23,23 @@ import {
   RedoIcon,
   UndoIcon,
 } from "./icons";
-import { controlButtonStyle, controlGroupStyle } from "./styles";
+
+type DrawingKind = {
+  kind: DrawingControlKind;
+  label: string;
+  icon: ReactNode;
+};
 
 export type DrawingToolbarProps = DrawingControlsOptions & {
   className?: string;
   style?: CSSProperties;
+  buttonClassName?: string;
   buttonStyle?: CSSProperties;
   children?: ReactNode | ((control: DrawingControls) => ReactNode);
+  kinds?: Array<DrawingKind>;
 };
 
-const DRAWING_KINDS: Array<{
-  kind: DrawingControlKind;
-  label: string;
-  icon: ReactNode;
-}> = [
+const DRAWING_KINDS: Array<DrawingKind> = [
   { kind: "distance", label: "Draw distance", icon: <DistanceIcon /> },
   { kind: "area", label: "Draw area", icon: <AreaIcon /> },
   { kind: "circle", label: "Draw radius", icon: <CircleIcon /> },
@@ -45,12 +48,13 @@ const DRAWING_KINDS: Array<{
 export function DrawingToolbar({
   className,
   style,
+  buttonClassName,
   buttonStyle,
   children,
+  kinds = DRAWING_KINDS,
   ...options
 }: DrawingToolbarProps) {
   const control = useDrawingControls(options);
-  const mergedButtonStyle = buttonStyle ?? controlButtonStyle;
 
   if (typeof children === "function") {
     return children(control);
@@ -60,36 +64,39 @@ export function DrawingToolbar({
     return children;
   }
 
+  const combinedClassName = `olsx-control-group olsx-drawing-toolbar ${className ?? ""}`.trim();
+  const baseButtonClass = `olsx-control-button ${buttonClassName ?? ""}`.trim();
+
   return (
     <div
-      className={className}
-      style={style ?? controlGroupStyle}
+      className={combinedClassName}
+      style={style}
       role="toolbar"
       aria-label="Drawing controls"
     >
-      {DRAWING_KINDS.map(({ kind, label, icon }) => (
-        <button
-          key={kind}
-          aria-label={label}
-          aria-pressed={control.activeKind === kind}
-          disabled={control.disabled}
-          onClick={() => control.toggleKind(kind)}
-          style={{
-            ...mergedButtonStyle,
-            backgroundColor:
-              control.activeKind === kind ? "rgba(37, 99, 235, 0.14)" : mergedButtonStyle.backgroundColor,
-            color: control.activeKind === kind ? "#1d4ed8" : mergedButtonStyle.color,
-          }}
-          type="button"
-        >
-          {icon}
-        </button>
-      ))}
+      {kinds.map(({ kind, label, icon }) => {
+        const isActive = control.activeKind === kind;
+        return (
+          <button
+            key={kind}
+            aria-label={label}
+            aria-pressed={isActive}
+            disabled={control.disabled}
+            onClick={() => control.toggleKind(kind)}
+            className={`${baseButtonClass} ${isActive ? "olsx-active" : ""}`.trim()}
+            style={buttonStyle}
+            type="button"
+          >
+            {icon}
+          </button>
+        );
+      })}
       <button
         aria-label="Cancel drawing"
         disabled={control.disabled || !control.activeKind}
         onClick={control.cancel}
-        style={mergedButtonStyle}
+        className={baseButtonClass}
+        style={buttonStyle}
         type="button"
       >
         <CancelIcon />
@@ -98,7 +105,8 @@ export function DrawingToolbar({
         aria-label="Undo drawing action"
         disabled={control.disabled || !control.canUndo}
         onClick={control.undo}
-        style={mergedButtonStyle}
+        className={baseButtonClass}
+        style={buttonStyle}
         type="button"
       >
         <UndoIcon />
@@ -107,7 +115,8 @@ export function DrawingToolbar({
         aria-label="Redo drawing action"
         disabled={control.disabled || !control.canRedo}
         onClick={control.redo}
-        style={mergedButtonStyle}
+        className={baseButtonClass}
+        style={buttonStyle}
         type="button"
       >
         <RedoIcon />
@@ -116,7 +125,8 @@ export function DrawingToolbar({
         aria-label="Clear drawings"
         disabled={control.disabled}
         onClick={control.clear}
-        style={mergedButtonStyle}
+        className={baseButtonClass}
+        style={buttonStyle}
         type="button"
       >
         <ClearIcon />

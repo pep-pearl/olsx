@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 @ai-purpose OLSX 공식 문서의 최상위 진입점이다.
 @ai-doc-kind documentation-entrypoint
 @ai-keywords OLSX, README, installation, quick start, API docs, guides, examples, OpenLayers, React map
@@ -43,6 +43,7 @@ npm install olsx ol react react-dom
 
 ```tsx
 import { BaseLayer, Controls, OLSXMap } from "olsx";
+import "olsx/styles.css"; // 기본 스타일 프리셋 적용 (선택 사항)
 
 export function BasicMap() {
   return (
@@ -59,6 +60,32 @@ export function BasicMap() {
   );
 }
 ```
+
+## 스타일링 아키텍처 (Styling Architecture)
+
+OLSX는 컴포넌트의 기능적 핵심(Headless/Unstyled)과 레이아웃 스타일(CSS Preset)을 완전히 분리하여 제공합니다. 
+
+### 1. Headless Hooks
+UI 렌더링에 일절 관여하지 않고 오직 OpenLayers의 상태 제어 및 상호작용 로직만 소유하는 순수 로직 훅입니다. 완전한 커스텀 UI 디자인을 구축하고 싶을 때 유용합니다.
+- `useZoomControl()`
+- `useBaseLayerControl()`
+- `useDrawingControls()`
+
+### 2. Unstyled/Default Components
+어떤 인라인 스타일도 포함하고 있지 않은 순수 의미론적(Semantic) HTML 마크업 컴포넌트입니다. Tailwind CSS, SCSS, Styled Components 등의 CSS 도구를 사용하는 개발자는 이 기본 컴포넌트들에 `className`과 `style`을 전달하여 원하는 대로 스타일을 적용할 수 있습니다.
+- `Controls`
+- `Controls.Zoom`
+- `Controls.BaseLayerToggle`
+- `Controls.DrawingToolbar`
+
+> [!NOTE]
+> 모든 기본 컴포넌트는 `className`, `style` 및 내부 엘리먼트 제어용 `buttonClassName`, `buttonStyle` 등의 Pass-through 프로퍼티를 완전히 개방하고 있어 유연한 커스타마이징이 가능합니다.
+
+### 3. Optional Preset CSS
+라이브러리에서 기본 제공하는 아름다운 기본 UI 컨트롤 테마입니다. 직접 스타일링하기보다는 빠르게 준비된 UI를 사용하고자 할 때 임포트하여 사용합니다.
+- 사용법: `import "olsx/styles.css"`
+
+---
 
 ## 문서
 

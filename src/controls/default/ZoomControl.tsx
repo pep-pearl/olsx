@@ -1,13 +1,22 @@
 import type { ReactNode } from "react";
 import { useZoomControl, type ZoomControlApi } from "../headless";
 import { ZoomInIcon, ZoomOutIcon } from "./icons";
-import { controlButtonStyle, controlGroupStyle } from "./styles";
 
 export type ZoomControlProps = {
+  className?: string;
+  style?: React.CSSProperties;
+  buttonClassName?: string;
+  buttonStyle?: React.CSSProperties;
   children?: ReactNode | ((control: ZoomControlApi) => ReactNode);
 };
 
-export function ZoomControl({ children }: ZoomControlProps) {
+export function ZoomControl({
+  className,
+  style,
+  buttonClassName,
+  buttonStyle,
+  children,
+}: ZoomControlProps) {
   const control = useZoomControl();
 
   if (!control.isReady) return null;
@@ -21,9 +30,13 @@ export function ZoomControl({ children }: ZoomControlProps) {
   }
 
   return (
-    <div style={controlGroupStyle}>
+    <div
+      className={`olsx-control-group olsx-zoom-control ${className ?? ""}`.trim()}
+      style={style}
+    >
       <button
-        style={controlButtonStyle}
+        className={`olsx-control-button olsx-zoom-in ${buttonClassName ?? ""}`.trim()}
+        style={buttonStyle}
         type="button"
         onClick={() => control.zoomIn()}
         aria-label="Zoom In"
@@ -31,7 +44,8 @@ export function ZoomControl({ children }: ZoomControlProps) {
         <ZoomInIcon />
       </button>
       <button
-        style={{ ...controlButtonStyle, borderTop: "1px solid #e5e7eb" }}
+        className={`olsx-control-button olsx-zoom-out ${buttonClassName ?? ""}`.trim()}
+        style={buttonStyle}
         type="button"
         onClick={() => control.zoomOut()}
         aria-label="Zoom Out"
