@@ -118,7 +118,9 @@ export function getAreaPreviewCoordinates(
 export function getCompletedAreaCoordinates(points: Coordinate[]) {
   if (points.length === 0) return [];
 
-  const coordinates = points.map((coordinate) => coordinate.slice() as Coordinate);
+  const coordinates = points.map(
+    (coordinate) => coordinate.slice() as Coordinate,
+  );
   const firstPoint = coordinates[0];
   const lastPoint = coordinates.at(-1);
 
@@ -166,4 +168,63 @@ export function createLineStringFromCoordinates(coordinates: Coordinate[]) {
 
 export function createPolygonFromCoordinates(coordinates: Coordinate[]) {
   return new Polygon([coordinates.map((coordinate) => coordinate.slice())]);
+}
+
+const DEFAULT_MANUAL_DRAW_CLICK_TOLERANCE_PX = 8;
+
+export function createClickOnlyPointerGuard(
+  tolerancePx = DEFAULT_MANUAL_DRAW_CLICK_TOLERANCE_PX,
+) {
+  let pointerId: number | null = null;
+  let startX = 0;
+  let startY = 0;
+  let moved = false;
+
+  const isTrackedPointer = (event: PointerEvent) =>
+    pointerId === event.pointerId;
+
+  const isMovedBeyondTolerance = (event: PointerEvent) => {
+    const dx = event.clientX - startX;
+    const dy = event.clientY - startY;
+    return dx * dx + dy * dy > tolerancePx * tolerancePx;
+  };
+
+  return {
+    pointerDown(event: PointerEvent) {
+      if (event.button !== 0 || !event.isPrimary) {
+        pointerId = null;
+        moved = false;
+        return;
+      }
+
+      pointerId = event.pointerId;
+      startX = event.clientX;
+      startY = event.clientY;
+      moved = false;
+    },
+
+    pointerMove(event: PointerEvent) {
+      if (!isTrackedPointer(event)) return;
+      if (isMovedBeyondTolerance(event)) {
+        moved = true;
+      }
+    },
+
+    pointerUp(event: PointerEvent) {
+      if (!isTrackedPointer(event)) return false;
+
+      const shouldAccept =
+        event.button === 0 && !moved && !isMovedBeyondTolerance(event);
+
+      pointerId = null;
+      moved = false;
+
+      return shouldAccept;
+    },
+
+    reset() {
+      pointerId = null;
+      moved = false;
+    },
+  };
 }

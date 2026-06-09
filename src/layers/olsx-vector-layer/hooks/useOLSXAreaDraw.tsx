@@ -7,11 +7,16 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useMapRefsContext } from "../../../core/model/context";
 import { getEventCoordinate } from "../../../core/utils/olUtils";
 import {
+  DRAWING_PRESET_COLORS,
+  getDrawingPresetCursor,
+} from "../components/drawingPresetStyles";
+import {
   registerDrawingCommands,
   updateDrawingCommandState,
 } from "../draw/internal/drawingCommandBus";
 import type { DrawingResult } from "../draw/internal/drawingHistory";
 import {
+  createClickOnlyPointerGuard,
   createPolygonFromCoordinates,
   getAreaPreviewCoordinates,
   getCompletedAreaCoordinates,
@@ -26,10 +31,6 @@ import {
   getPolygonArea,
 } from "../draw/internal/measurement";
 import { useDrawingHistory } from "../headless";
-import {
-  getDrawingPresetCursor,
-  DRAWING_PRESET_COLORS,
-} from "../components/drawingPresetStyles";
 import {
   useOLSXDrawLatestSourceRef,
   useOLSXDrawPoints,
@@ -217,8 +218,15 @@ export function useOLSXAreaDraw({
     const previousCursor = viewport.style.cursor;
     viewport.style.cursor = getDrawingPresetCursor("area");
 
-    const handleClick = (event: MouseEvent) => {
-      if (event.button !== 0) return;
+    const clickGuard = createClickOnlyPointerGuard();
+
+    const handlePointerDown = (event: PointerEvent) => {
+      clickGuard.pointerDown(event);
+    };
+
+    const handlePointerUp = (event: PointerEvent) => {
+      if (!clickGuard.pointerUp(event)) return;
+
       const coordinate = getEventCoordinate(map, event);
       setNextPoints([...pointsRef.current, coordinate]);
       setNextPreviewCoordinate(coordinate);
@@ -226,11 +234,16 @@ export function useOLSXAreaDraw({
     };
 
     const handlePointerMove = (event: PointerEvent) => {
+      clickGuard.pointerMove(event);
+
       if (pointsRef.current.length === 0) return;
       setNextPreviewCoordinate(getEventCoordinate(map, event));
       queueMicrotask(syncSketchFeature);
     };
 
+    const handlePointerCancel = () => {
+      clickGuard.reset();
+    };
     const handleContextMenu = (event: MouseEvent) => {
       event.preventDefault();
       event.stopPropagation();
@@ -264,14 +277,18 @@ export function useOLSXAreaDraw({
       history.undo();
     };
 
-    viewport.addEventListener("click", handleClick);
+    viewport.addEventListener("pointerdown", handlePointerDown);
+    viewport.addEventListener("pointerup", handlePointerUp);
     viewport.addEventListener("pointermove", handlePointerMove);
+    viewport.addEventListener("pointercancel", handlePointerCancel);
     viewport.addEventListener("contextmenu", handleContextMenu);
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      viewport.removeEventListener("click", handleClick);
+      viewport.removeEventListener("pointerdown", handlePointerDown);
+      viewport.removeEventListener("pointerup", handlePointerUp);
       viewport.removeEventListener("pointermove", handlePointerMove);
+      viewport.removeEventListener("pointercancel", handlePointerCancel);
       viewport.removeEventListener("contextmenu", handleContextMenu);
       window.removeEventListener("keydown", handleKeyDown);
       viewport.style.cursor = previousCursor;

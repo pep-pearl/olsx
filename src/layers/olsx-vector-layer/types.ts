@@ -75,6 +75,7 @@ export type OLSXDrawProps = {
   onDrawStart?: (event: DrawEvent) => void;
   onDrawEnd?: (event: DrawEvent) => void;
   onDrawAbort?: (event: DrawEvent) => void;
+  clickTolerance?: number;
   children?:
     | React.ReactNode
     | ((props: {
@@ -91,6 +92,6 @@ export type OLSXDrawRef = {
   isActive: () => boolean;
 };
 
-export type { OLSXDistanceDrawProps } from "./components/OLSXDistanceDraw";
 export type { OLSXAreaDrawProps } from "./components/OLSXAreaDraw";
 export type { OLSXCircleDrawProps } from "./components/OLSXCircleDraw";
+export type { OLSXDistanceDrawProps } from "./components/OLSXDistanceDraw";

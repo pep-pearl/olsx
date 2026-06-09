@@ -11,11 +11,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMapRefsContext } from "../../../core/model/context";
 import { getEventCoordinate } from "../../../core/utils/olUtils";
 import {
+  DRAWING_PRESET_COLORS,
+  getDrawingPresetCursor,
+} from "../components/drawingPresetStyles";
+import {
   registerDrawingCommands,
   updateDrawingCommandState,
 } from "../draw/internal/drawingCommandBus";
 import type { DrawingResult } from "../draw/internal/drawingHistory";
 import {
+  createClickOnlyPointerGuard,
   getCirclePreviewGeometry,
   getCircleRadiusLineCoordinates,
   removeFeaturesFromSource,
@@ -28,10 +33,6 @@ import {
   getCircleRadius,
 } from "../draw/internal/measurement";
 import { useDrawingHistory } from "../headless";
-import {
-  getDrawingPresetCursor,
-  DRAWING_PRESET_COLORS,
-} from "../components/drawingPresetStyles";
 import { useOLSXDrawLatestSourceRef } from "./useOLSXDraw";
 
 export type UseOLSXCircleDrawProps = {
@@ -334,9 +335,17 @@ export function useOLSXCircleDraw({
     const previousCursor = viewport.style.cursor;
     viewport.style.cursor = getDrawingPresetCursor("circle");
 
-    const handleClick = (event: MouseEvent) => {
-      if (event.button !== 0) return;
+    const clickGuard = createClickOnlyPointerGuard();
+
+    const handlePointerDown = (event: PointerEvent) => {
+      clickGuard.pointerDown(event);
+    };
+
+    const handlePointerUp = (event: PointerEvent) => {
+      if (!clickGuard.pointerUp(event)) return;
+
       const coordinate = getEventCoordinate(map, event);
+
       if (!centerRef.current) {
         setNextCenter(coordinate);
         setNextEdge(coordinate);
@@ -349,9 +358,15 @@ export function useOLSXCircleDraw({
     };
 
     const handlePointerMove = (event: PointerEvent) => {
+      clickGuard.pointerMove(event);
+
       if (!centerRef.current) return;
       setNextEdge(getEventCoordinate(map, event));
       queueMicrotask(syncSketchFeature);
+    };
+
+    const handlePointerCancel = () => {
+      clickGuard.reset();
     };
 
     const handleContextMenu = (event: MouseEvent) => {
@@ -384,14 +399,18 @@ export function useOLSXCircleDraw({
       history.undo();
     };
 
-    viewport.addEventListener("click", handleClick);
+    viewport.addEventListener("pointerdown", handlePointerDown);
+    viewport.addEventListener("pointerup", handlePointerUp);
     viewport.addEventListener("pointermove", handlePointerMove);
+    viewport.addEventListener("pointercancel", handlePointerCancel);
     viewport.addEventListener("contextmenu", handleContextMenu);
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      viewport.removeEventListener("click", handleClick);
+      viewport.removeEventListener("pointerdown", handlePointerDown);
+      viewport.removeEventListener("pointerup", handlePointerUp);
       viewport.removeEventListener("pointermove", handlePointerMove);
+      viewport.removeEventListener("pointercancel", handlePointerCancel);
       viewport.removeEventListener("contextmenu", handleContextMenu);
       window.removeEventListener("keydown", handleKeyDown);
       viewport.style.cursor = previousCursor;

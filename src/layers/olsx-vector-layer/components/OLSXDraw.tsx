@@ -58,6 +58,7 @@ function OLSXDrawComp(
     onDrawEnd,
     onDrawAbort,
     children,
+    clickTolerance,
   }: OLSXDrawProps,
   ref: React.ForwardedRef<OLSXDrawRef>,
 ) {
@@ -87,6 +88,7 @@ function OLSXDrawComp(
       source: vectorSource,
       type,
       style: style ?? DEFAULT_STYLE,
+      clickTolerance,
     });
     draw.setActive(initialActiveRef.current);
     map.addInteraction(draw);
@@ -101,7 +103,7 @@ function OLSXDrawComp(
       setDrawInstance(null);
       setIsDrawReady(false);
     };
-  }, [mapRef, vectorSourceRef, type, style]);
+  }, [mapRef, vectorSourceRef, type, style, clickTolerance]);
 
   useEffect(() => {
     drawInstance?.setActive(active);
