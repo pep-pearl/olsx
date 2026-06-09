@@ -24,6 +24,10 @@ type VectorSourceLike = {
 
 export type FeatureDiffState = Map<string, Feature>;
 
+type FeaturePropertyValue = string | object;
+
+type FeatureProperties = Record<string, FeaturePropertyValue>;
+
 export type UpsertFeaturesOptions<
   TType extends string,
   TData extends object,
@@ -68,6 +72,76 @@ function createFeature<TType extends string, TData extends object>({
   return feature;
 }
 
+function getFeatureProperties<TType extends string, TData extends object>({
+  featureId,
+  item,
+  layerId,
+  featuresId,
+  featureType,
+}: {
+  featureId: string;
+  item: TData;
+  layerId: string;
+  featuresId: string;
+  featureType: TType;
+}): FeatureProperties {
+  return {
+    featureType,
+    [FEATURE_ID_KEY]: featureId,
+    [FEATURE_GROUP_ID_KEY]: featuresId,
+    [FEATURE_LAYER_ID_KEY]: layerId,
+    [FEATURE_TYPE_KEY]: featureType,
+    [FEATURE_PROPERTIES_KEY]: item,
+  };
+}
+
+function hasPropertiesChanged(feature: Feature, properties: FeatureProperties) {
+  return Object.entries(properties).some(
+    ([key, value]) => feature.get(key) !== value,
+  );
+}
+
+function updateFeature<TType extends string, TData extends object>({
+  feature,
+  featureId,
+  item,
+  geometry,
+  layerId,
+  featuresId,
+  featureType,
+}: {
+  feature: Feature;
+  featureId: string;
+  item: TData;
+  geometry: Geometry;
+  layerId: string;
+  featuresId: string;
+  featureType: TType;
+}) {
+  const properties = getFeatureProperties({
+    featureId,
+    item,
+    layerId,
+    featuresId,
+    featureType,
+  });
+  const propertiesChanged = hasPropertiesChanged(feature, properties);
+  const geometryChanged = feature.getGeometry() !== geometry;
+
+  if (!propertiesChanged && !geometryChanged) return;
+
+  if (propertiesChanged) {
+    feature.setProperties(properties, true);
+  }
+
+  if (geometryChanged) {
+    feature.setGeometry(geometry);
+    return;
+  }
+
+  feature.changed();
+}
+
 export function upsertFeatures<TType extends string, TData extends object>({
   data,
   getGeometry,
@@ -88,13 +162,15 @@ export function upsertFeatures<TType extends string, TData extends object>({
     const existingFeature = featuresById.get(featureId);
 
     if (existingFeature) {
-      existingFeature.setGeometry(geometry);
-      existingFeature.set("featureType", featureType);
-      existingFeature.set(FEATURE_ID_KEY, featureId);
-      existingFeature.set(FEATURE_GROUP_ID_KEY, featuresId);
-      existingFeature.set(FEATURE_LAYER_ID_KEY, layerId);
-      existingFeature.set(FEATURE_TYPE_KEY, featureType);
-      existingFeature.set(FEATURE_PROPERTIES_KEY, item);
+      updateFeature({
+        feature: existingFeature,
+        featureId,
+        item,
+        geometry,
+        layerId,
+        featuresId,
+        featureType,
+      });
       return;
     }
 

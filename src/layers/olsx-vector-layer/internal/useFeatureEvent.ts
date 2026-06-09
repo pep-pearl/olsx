@@ -1,10 +1,10 @@
 /**
- * @ai-purpose React hooks that manage singleclick and pointermove events for a single OpenLayers Feature.
+ * @ai-purpose React hooks that manage singleclick and pointermove events for a group of OpenLayers Features.
  * @ai-entry false
  * @ai-domain gis
  * @ai-depends listenerRegistry, vectorLayerContext, findFeatureAtEvent
- * @ai-used-by OLSXFeature component
- * @ai-keywords useFeatureEvent, useFeatureSingleclick, useFeaturePointermove, events
+ * @ai-used-by OLSXFeatures component
+ * @ai-keywords useFeaturesEvent, useFeaturesSingleclick, useFeaturesPointermove, events
  */
 
 import type { MapBrowserEvent } from "ol";
@@ -20,29 +20,38 @@ import {
   type MapEventTarget,
 } from "../../../core/listeners/listenerRegistry";
 import { useMapRefsContext } from "../../../core/model/context";
+import { findFeatureAtEvent } from "../../../core/utils/olUtils";
 import {
   buildListenerKey,
   getListenerKey,
-  isSingleFeature,
+  isFeatureInFeatures,
 } from "../../../core/utils/olsxUtils";
-import { findFeatureAtEvent } from "../../../core/utils/olUtils";
-import { useVectorLayerContext } from "../internal/vectorLayerContext";
+import { useVectorLayerContext } from "./vectorLayerContext";
 
-function useIsFeature(layerId: string, featureId: string) {
+function useIsFeaturesFeature(
+  layerId: string,
+  featuresId: string,
+  featureType: string,
+) {
   return useCallback(
-    (feat: FeatureLike) => isSingleFeature(feat, layerId, featureId),
-    [featureId, layerId],
+    (feat: FeatureLike) =>
+      isFeatureInFeatures(feat, layerId, featuresId, featureType),
+    [featuresId, layerId, featureType],
   );
 }
 
-export function useFeatureSingleclick<TData extends object>(
-  featureId: string,
+export function useFeaturesSingleclick<
+  TType extends string,
+  TData extends object,
+>(
+  featuresId: string,
+  featureType: TType,
   onClick: ((item: TData, feature: FeatureLike) => void) | undefined,
 ) {
   const { mapRef, listenerRegistryRef } = useMapRefsContext();
   const { id: layerId, vectorSourceRef } = useVectorLayerContext();
 
-  const predicate = useIsFeature(layerId, featureId);
+  const predicate = useIsFeaturesFeature(layerId, featuresId, featureType);
 
   useEffect(() => {
     const map = mapRef?.current;
@@ -50,7 +59,7 @@ export function useFeatureSingleclick<TData extends object>(
 
     if (!vectorSourceRef.current) {
       console.warn(
-        `Layer with id "${layerId}" does not have a vector source. Click handler for features "${featureId}" will not be set.`,
+        `Layer with id "${layerId}" does not have a vector source. Click handler for features "${featuresId}" will not be set.`,
       );
       return;
     }
@@ -68,12 +77,12 @@ export function useFeatureSingleclick<TData extends object>(
     return registerMapListener(
       listenerRegistryRef.current,
       map as unknown as MapEventTarget,
-      buildListenerKey(layerId, featureId, EVENT_TYPE_SINGLECLICK),
+      buildListenerKey(layerId, featuresId, EVENT_TYPE_SINGLECLICK),
       EVENT_TYPE_SINGLECLICK,
       handleClick as (event: never) => void,
     );
   }, [
-    featureId,
+    featuresId,
     layerId,
     listenerRegistryRef,
     mapRef,
@@ -83,17 +92,23 @@ export function useFeatureSingleclick<TData extends object>(
   ]);
 }
 
-export function useFeaturePointermove<TData extends object>(
-  featureId: string,
+export function useFeaturesPointermove<
+  TType extends string,
+  TData extends object,
+>(
+  featuresId: string,
+  featureType: TType,
   onHover: ((item: TData, feature: FeatureLike) => void) | undefined,
   hasClick: boolean,
 ) {
   const { mapRef, listenerRegistryRef } = useMapRefsContext();
   const { id: layerId, vectorSourceRef } = useVectorLayerContext();
 
-  const predicate = useIsFeature(layerId, featureId);
+  const predicate = useIsFeaturesFeature(layerId, featuresId, featureType);
 
   const lastHoveredFeatureRef = useRef<FeatureLike | null>(null);
+  const latestPointerMoveEventRef = useRef<MapBrowserEvent | null>(null);
+  const pointerMoveFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     const map = mapRef?.current;
@@ -101,12 +116,12 @@ export function useFeaturePointermove<TData extends object>(
 
     if (!vectorSourceRef.current) {
       console.warn(
-        `Layer with id "${layerId}" does not have a vector source. Hover handler for feature "${featureId}" will not be set.`,
+        `Layer with id "${layerId}" does not have a vector source. Hover handler for features "${featuresId}" will not be set.`,
       );
       return;
     }
 
-    const handlePointerMove = (event: MapBrowserEvent) => {
+    const processPointerMove = (event: MapBrowserEvent) => {
       if (event.dragging) return;
 
       const feature = findFeatureAtEvent(map, event, predicate);
@@ -135,15 +150,44 @@ export function useFeaturePointermove<TData extends object>(
       targetElement.style.cursor = hasSingleclick ? "pointer" : "";
     };
 
-    return registerMapListener(
+    const handlePointerMove = (event: MapBrowserEvent) => {
+      latestPointerMoveEventRef.current = event;
+
+      if (pointerMoveFrameRef.current !== null) return;
+
+      pointerMoveFrameRef.current = window.requestAnimationFrame(() => {
+        pointerMoveFrameRef.current = null;
+
+        const latestEvent = latestPointerMoveEventRef.current;
+        latestPointerMoveEventRef.current = null;
+
+        if (latestEvent) {
+          processPointerMove(latestEvent);
+        }
+      });
+    };
+
+    const unregister = registerMapListener(
       listenerRegistryRef.current,
       map as unknown as MapEventTarget,
-      buildListenerKey(layerId, featureId, EVENT_TYPE_POINTERMOVE),
+      buildListenerKey(layerId, featuresId, EVENT_TYPE_POINTERMOVE),
       EVENT_TYPE_POINTERMOVE,
       handlePointerMove as (event: never) => void,
     );
+
+    return () => {
+      unregister();
+
+      if (pointerMoveFrameRef.current !== null) {
+        window.cancelAnimationFrame(pointerMoveFrameRef.current);
+        pointerMoveFrameRef.current = null;
+      }
+
+      latestPointerMoveEventRef.current = null;
+    };
   }, [
-    featureId,
+    featuresId,
+    featureType,
     hasClick,
     layerId,
     listenerRegistryRef,
