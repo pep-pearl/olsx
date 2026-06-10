@@ -20,7 +20,10 @@ import {
   type MapEventTarget,
 } from "../../../core/listeners/listenerRegistry";
 import { useMapRefsContext } from "../../../core/model/context";
-import { findFeatureAtEvent } from "../../../core/utils/olUtils";
+import {
+  findFeatureAtEvent,
+  findIndexedFeatureAtEvent,
+} from "../../../core/utils/olUtils";
 import {
   buildListenerKey,
   getListenerKey,
@@ -100,6 +103,7 @@ export function useFeaturesPointermove<
   featureType: TType,
   onHover: ((item: TData, feature: FeatureLike) => void) | undefined,
   hasClick: boolean,
+  onHoverEnd?: (item?: TData, feature?: FeatureLike) => void,
 ) {
   const { mapRef, listenerRegistryRef } = useMapRefsContext();
   const { id: layerId, vectorSourceRef } = useVectorLayerContext();
@@ -107,6 +111,9 @@ export function useFeaturesPointermove<
   const predicate = useIsFeaturesFeature(layerId, featuresId, featureType);
 
   const lastHoveredFeatureRef = useRef<FeatureLike | null>(null);
+  const latestPointerMoveEventRef = useRef<MapBrowserEvent | null>(null);
+  const pointerMoveFrameRef = useRef<number | null>(null);
+  const lastPointerMoveProcessedAtRef = useRef(0);
 
   useEffect(() => {
     const map = mapRef?.current;
@@ -119,14 +126,30 @@ export function useFeaturesPointermove<
       return;
     }
 
-    const handlePointerMove = (event: MapBrowserEvent) => {
+    const processPointerMove = (event: MapBrowserEvent) => {
       if (event.dragging) return;
 
-      const feature = findFeatureAtEvent(map, event, predicate);
+      const vectorSource = vectorSourceRef.current;
+      if (!vectorSource) return;
+
+      const feature = findIndexedFeatureAtEvent(
+        map,
+        vectorSource,
+        event,
+        predicate,
+      );
       const targetElement = map.getTargetElement();
 
       if (!feature || !("get" in feature)) {
-        lastHoveredFeatureRef.current = null;
+        const previousFeature = lastHoveredFeatureRef.current;
+        if (previousFeature !== null) {
+          lastHoveredFeatureRef.current = null;
+
+          const previousItem = previousFeature.get(FEATURE_PROPERTIES_KEY) as
+            | TData
+            | undefined;
+          onHoverEnd?.(previousItem, previousFeature);
+        }
         targetElement.style.cursor = "";
         return;
       }
@@ -148,13 +171,46 @@ export function useFeaturesPointermove<
       targetElement.style.cursor = hasSingleclick ? "pointer" : "";
     };
 
-    return registerMapListener(
+    const handlePointerMove = (event: MapBrowserEvent) => {
+      latestPointerMoveEventRef.current = event;
+
+      if (pointerMoveFrameRef.current !== null) return;
+
+      const now = performance.now();
+      const elapsed = now - lastPointerMoveProcessedAtRef.current;
+      const delay = Math.max(0, 50 - elapsed);
+
+      pointerMoveFrameRef.current = window.setTimeout(() => {
+        pointerMoveFrameRef.current = null;
+
+        const latestEvent = latestPointerMoveEventRef.current;
+        latestPointerMoveEventRef.current = null;
+
+        if (latestEvent) {
+          lastPointerMoveProcessedAtRef.current = performance.now();
+          processPointerMove(latestEvent);
+        }
+      }, delay);
+    };
+
+    const unregister = registerMapListener(
       listenerRegistryRef.current,
       map as unknown as MapEventTarget,
       buildListenerKey(layerId, featuresId, EVENT_TYPE_POINTERMOVE),
       EVENT_TYPE_POINTERMOVE,
       handlePointerMove as (event: never) => void,
     );
+
+    return () => {
+      unregister();
+
+      if (pointerMoveFrameRef.current !== null) {
+        window.clearTimeout(pointerMoveFrameRef.current);
+        pointerMoveFrameRef.current = null;
+      }
+
+      latestPointerMoveEventRef.current = null;
+    };
   }, [
     featuresId,
     featureType,
@@ -163,6 +219,7 @@ export function useFeaturesPointermove<
     listenerRegistryRef,
     mapRef,
     onHover,
+    onHoverEnd,
     predicate,
     vectorSourceRef,
   ]);

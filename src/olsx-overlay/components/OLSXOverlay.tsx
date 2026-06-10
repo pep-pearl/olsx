@@ -130,7 +130,7 @@ function OLSXOverlayComp(
     return null;
   }
 
-  if (!portalElement || !isVisible || !coordinate) {
+  if (!portalElement) {
     return null;
   }
 

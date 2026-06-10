@@ -28,6 +28,7 @@ export function OLSXFeatures<
     getId,
     onClick,
     onHover,
+    onHoverEnd,
   }: OLSXFeaturesProps<TType, TData>,
   ref: React.ForwardedRef<OLSXFeaturesRef>,
 ) {
@@ -45,6 +46,7 @@ export function OLSXFeatures<
     featureType,
     onHover,
     Boolean(onClick),
+    onHoverEnd,
   );
 
   useImperativeHandle(

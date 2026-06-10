@@ -1,10 +1,10 @@
 /**
- * @ai-purpose React hooks that manage singleclick and pointermove events for a group of OpenLayers Features.
+ * @ai-purpose React hooks that manage singleclick and pointermove events for a single OpenLayers Feature.
  * @ai-entry false
  * @ai-domain gis
  * @ai-depends listenerRegistry, vectorLayerContext, findFeatureAtEvent
- * @ai-used-by OLSXFeatures component
- * @ai-keywords useFeaturesEvent, useFeaturesSingleclick, useFeaturesPointermove, events
+ * @ai-used-by OLSXFeature component
+ * @ai-keywords useFeatureEvent, useFeatureSingleclick, useFeaturePointermove, events
  */
 
 import type { MapBrowserEvent } from "ol";
@@ -20,38 +20,29 @@ import {
   type MapEventTarget,
 } from "../../../core/listeners/listenerRegistry";
 import { useMapRefsContext } from "../../../core/model/context";
-import { findFeatureAtEvent } from "../../../core/utils/olUtils";
 import {
   buildListenerKey,
   getListenerKey,
-  isFeatureInFeatures,
+  isSingleFeature,
 } from "../../../core/utils/olsxUtils";
-import { useVectorLayerContext } from "./vectorLayerContext";
+import { findFeatureAtEvent } from "../../../core/utils/olUtils";
+import { useVectorLayerContext } from "../internal/vectorLayerContext";
 
-function useIsFeaturesFeature(
-  layerId: string,
-  featuresId: string,
-  featureType: string,
-) {
+function useIsFeature(layerId: string, featureId: string) {
   return useCallback(
-    (feat: FeatureLike) =>
-      isFeatureInFeatures(feat, layerId, featuresId, featureType),
-    [featuresId, layerId, featureType],
+    (feat: FeatureLike) => isSingleFeature(feat, layerId, featureId),
+    [featureId, layerId],
   );
 }
 
-export function useFeaturesSingleclick<
-  TType extends string,
-  TData extends object,
->(
-  featuresId: string,
-  featureType: TType,
+export function useFeatureSingleclick<TData extends object>(
+  featureId: string,
   onClick: ((item: TData, feature: FeatureLike) => void) | undefined,
 ) {
   const { mapRef, listenerRegistryRef } = useMapRefsContext();
   const { id: layerId, vectorSourceRef } = useVectorLayerContext();
 
-  const predicate = useIsFeaturesFeature(layerId, featuresId, featureType);
+  const predicate = useIsFeature(layerId, featureId);
 
   useEffect(() => {
     const map = mapRef?.current;
@@ -59,7 +50,7 @@ export function useFeaturesSingleclick<
 
     if (!vectorSourceRef.current) {
       console.warn(
-        `Layer with id "${layerId}" does not have a vector source. Click handler for features "${featuresId}" will not be set.`,
+        `Layer with id "${layerId}" does not have a vector source. Click handler for features "${featureId}" will not be set.`,
       );
       return;
     }
@@ -77,12 +68,12 @@ export function useFeaturesSingleclick<
     return registerMapListener(
       listenerRegistryRef.current,
       map as unknown as MapEventTarget,
-      buildListenerKey(layerId, featuresId, EVENT_TYPE_SINGLECLICK),
+      buildListenerKey(layerId, featureId, EVENT_TYPE_SINGLECLICK),
       EVENT_TYPE_SINGLECLICK,
       handleClick as (event: never) => void,
     );
   }, [
-    featuresId,
+    featureId,
     layerId,
     listenerRegistryRef,
     mapRef,
@@ -92,23 +83,17 @@ export function useFeaturesSingleclick<
   ]);
 }
 
-export function useFeaturesPointermove<
-  TType extends string,
-  TData extends object,
->(
-  featuresId: string,
-  featureType: TType,
+export function useFeaturePointermove<TData extends object>(
+  featureId: string,
   onHover: ((item: TData, feature: FeatureLike) => void) | undefined,
   hasClick: boolean,
 ) {
   const { mapRef, listenerRegistryRef } = useMapRefsContext();
   const { id: layerId, vectorSourceRef } = useVectorLayerContext();
 
-  const predicate = useIsFeaturesFeature(layerId, featuresId, featureType);
+  const predicate = useIsFeature(layerId, featureId);
 
   const lastHoveredFeatureRef = useRef<FeatureLike | null>(null);
-  const latestPointerMoveEventRef = useRef<MapBrowserEvent | null>(null);
-  const pointerMoveFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     const map = mapRef?.current;
@@ -116,12 +101,12 @@ export function useFeaturesPointermove<
 
     if (!vectorSourceRef.current) {
       console.warn(
-        `Layer with id "${layerId}" does not have a vector source. Hover handler for features "${featuresId}" will not be set.`,
+        `Layer with id "${layerId}" does not have a vector source. Hover handler for feature "${featureId}" will not be set.`,
       );
       return;
     }
 
-    const processPointerMove = (event: MapBrowserEvent) => {
+    const handlePointerMove = (event: MapBrowserEvent) => {
       if (event.dragging) return;
 
       const feature = findFeatureAtEvent(map, event, predicate);
@@ -150,44 +135,15 @@ export function useFeaturesPointermove<
       targetElement.style.cursor = hasSingleclick ? "pointer" : "";
     };
 
-    const handlePointerMove = (event: MapBrowserEvent) => {
-      latestPointerMoveEventRef.current = event;
-
-      if (pointerMoveFrameRef.current !== null) return;
-
-      pointerMoveFrameRef.current = window.requestAnimationFrame(() => {
-        pointerMoveFrameRef.current = null;
-
-        const latestEvent = latestPointerMoveEventRef.current;
-        latestPointerMoveEventRef.current = null;
-
-        if (latestEvent) {
-          processPointerMove(latestEvent);
-        }
-      });
-    };
-
-    const unregister = registerMapListener(
+    return registerMapListener(
       listenerRegistryRef.current,
       map as unknown as MapEventTarget,
-      buildListenerKey(layerId, featuresId, EVENT_TYPE_POINTERMOVE),
+      buildListenerKey(layerId, featureId, EVENT_TYPE_POINTERMOVE),
       EVENT_TYPE_POINTERMOVE,
       handlePointerMove as (event: never) => void,
     );
-
-    return () => {
-      unregister();
-
-      if (pointerMoveFrameRef.current !== null) {
-        window.cancelAnimationFrame(pointerMoveFrameRef.current);
-        pointerMoveFrameRef.current = null;
-      }
-
-      latestPointerMoveEventRef.current = null;
-    };
   }, [
-    featuresId,
-    featureType,
+    featureId,
     hasClick,
     layerId,
     listenerRegistryRef,

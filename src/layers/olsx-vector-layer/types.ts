@@ -21,6 +21,7 @@ export type OLSXFeaturesProps<
   data: Array<TData>;
   onClick?: (item: TData, feature: FeatureLike) => void;
   onHover?: (item: TData, feature: FeatureLike) => void;
+  onHoverEnd?: (item?: TData, feature?: FeatureLike) => void;
 };
 
 export type OLSXFeaturesRef = { getFeatures: () => Feature[] };
